@@ -1,0 +1,1 @@
+create database whs_mobile_reporting
