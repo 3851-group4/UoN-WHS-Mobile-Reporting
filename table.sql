@@ -29,3 +29,13 @@ create table if not exists issue
     create_time  datetime     default CURRENT_TIMESTAMP not null comment 'create time',
     update_time  datetime     default CURRENT_TIMESTAMP not null on update CURRENT_TIMESTAMP comment 'update time'
 ) comment 'issue' collate = utf8mb4_unicode_ci;
+
+-- issue_picture table
+create table if not exists issue_picture
+(
+    id           bigint auto_increment comment 'id' primary key,
+    issue_id     bigint                              not null comment 'related issue id',
+    url    varchar(512)                        not null comment 'picture url',
+    create_time  datetime default CURRENT_TIMESTAMP  not null comment 'create time',
+    update_time  datetime default CURRENT_TIMESTAMP  not null on update CURRENT_TIMESTAMP comment 'update time'
+) comment 'issue pictures table' collate = utf8mb4_unicode_ci;
