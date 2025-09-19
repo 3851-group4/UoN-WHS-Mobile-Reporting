@@ -7,10 +7,10 @@ use whs_mobile_reporting;
 create table if not exists user
 (
     id             bigint auto_increment comment 'id' primary key,
-    email   varchar(50)                           not null comment 'user name',
+    email   varchar(50)                           not null comment 'email',
     password  varchar(128)                           not null comment 'password',
-    name      varchar(20)                           null comment 'student name',
-    role      varchar(10) default 'student'            not null comment 'student/admin',
+    name      varchar(20)                           null comment 'user name',
+    role      varchar(10) default 'user'            not null comment 'user/admin',
     create_time    datetime     default CURRENT_TIMESTAMP not null comment 'create time',
     update_time    datetime     default CURRENT_TIMESTAMP not null on update CURRENT_TIMESTAMP comment 'update time',
     UNIQUE KEY uk_user_account (email)
@@ -33,7 +33,7 @@ create table if not exists issue
 create table if not exists issue_picture
 (
     id           bigint auto_increment comment 'id' primary key,
-    issue_id     bigint                              not null comment 'related issue id',
+    issue_id     bigint                              not null comment 'issue id',
     url    varchar(512)                        not null comment 'picture url',
     create_time  datetime default CURRENT_TIMESTAMP  not null comment 'create time',
     update_time  datetime default CURRENT_TIMESTAMP  not null on update CURRENT_TIMESTAMP comment 'update time'
