@@ -25,6 +25,7 @@ create table if not exists issue
     description  text                                  not null comment 'issue description',
     location     varchar(512)                          not null comment 'issue location',
     status       varchar(20) default 'new'             not null comment 'status',
+    happen_time  datetime     default CURRENT_TIMESTAMP not null comment 'issue happen time',
     create_time  datetime     default CURRENT_TIMESTAMP not null comment 'create time',
     update_time  datetime     default CURRENT_TIMESTAMP not null on update CURRENT_TIMESTAMP comment 'update time'
 ) comment 'issue' collate = utf8mb4_unicode_ci;
