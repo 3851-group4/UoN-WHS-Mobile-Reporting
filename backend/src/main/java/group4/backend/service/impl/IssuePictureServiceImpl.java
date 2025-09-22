@@ -1,4 +1,6 @@
 package group4.backend.service.impl;
 
-public class IssuePictureServiceImpl {
+import group4.backend.service.IssuePictureService;
+
+public class IssuePictureServiceImpl implements IssuePictureService {
 }

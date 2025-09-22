@@ -2,9 +2,13 @@ spring:
   datasource:
     username: root
     password: 123456
+#    replace to your own database
     url: jdbc:mysql://192.168.101.133:3306/gulimall_pms?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=UTC
     driver-class-name: com.mysql.cj.jdbc.Driver
-
+  data:
+    redis:
+      host: 192.168.101.133
+      port: 6379
     
 
 server:
