@@ -1,14 +1,19 @@
 package group4.backend.mapper;
 
-import org.apache.ibatis.annotations.Mapper;
-import org.apache.ibatis.annotations.Select;
+import group4.backend.entity.Issue;
+import org.apache.ibatis.annotations.*;
 
 @Mapper
 public interface IssueMapper  {
 
 
+    @Insert("insert into issue(user_id,title,description,location,status,happen_time,create_time,update_time) values(#{userId},#{title},#{description},#{location},#{status},#{happenTime},#{createTime},#{updateTime})")
+    @Options(useGeneratedKeys = true, keyProperty = "id")
+    void insert(Issue issue);
 
 
+    void update(Issue issue);
 
-
+    @Select("select * from issue where id=#{id}")
+    Issue selectById(Long id);
 }

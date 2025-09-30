@@ -6,5 +6,28 @@
 <mapper namespace="group4.backend.mapper.IssueMapper">
 
 
+    <update id="update" parameterType="group4.backend.entity.Issue">
+
+            update issue
+            <set>
+                <if test="title != null and title != ''">
+                    title = #{title},
+                </if>
+                <if test="description != null and description != ''">
+                    description = #{description},
+                </if>
+                <if test="location != null and location != ''">
+                    location = #{location},
+                </if>
+                <if test="happenTime != null">
+                    happen_time = #{happenTime},
+                </if>
+
+                update_time = #{updateTime}
+            </set>
+            where id = #{id}
+
+
+    </update>
 
 </mapper>
