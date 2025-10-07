@@ -45,4 +45,29 @@ public class IssueController {
         return R.ok(id);
 
     }
+
+    // delete issue
+    @DeleteMapping("/delete/{issueId}")
+    public R deleteIssue(@PathVariable Long issueId, HttpServletRequest request){
+
+
+        // get token from header
+        String token = request.getHeader("token");
+
+        // get user info from token
+        String info = stringRedisTemplate.opsForValue().get(token);
+        User user = gson.fromJson(info, User.class);
+
+
+        // delete issue
+
+        issueService.deleteIssue(user.getId(),issueId);
+
+
+        return R.ok();
+
+
+    }
+
+
 }

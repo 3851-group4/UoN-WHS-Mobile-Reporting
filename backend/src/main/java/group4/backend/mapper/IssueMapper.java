@@ -16,4 +16,7 @@ public interface IssueMapper  {
 
     @Select("select * from issue where id=#{id}")
     Issue selectById(Long id);
+
+    @Delete("delete from issue where id=#{issueId}")
+    void delete(Long issueId);
 }

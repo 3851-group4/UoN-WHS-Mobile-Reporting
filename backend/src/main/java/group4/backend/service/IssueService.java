@@ -4,4 +4,6 @@ import group4.backend.dto.IssueAddOrUpdateDto;
 
 public interface IssueService {
     Long upsertIssue(Long id, IssueAddOrUpdateDto issueAddOrUpdateDto);
+
+    void deleteIssue(Long id, Long issueId);
 }

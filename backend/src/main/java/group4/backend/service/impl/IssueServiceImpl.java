@@ -59,4 +59,32 @@ public class IssueServiceImpl implements IssueService {
 
 
     }
+
+    @Override
+    public void deleteIssue(Long id, Long issueId) {
+
+
+        // get issue by issueId
+        Issue issue = issueMapper.selectById(issueId);
+
+        // valid if issue can be deleted
+        if(issue==null) {
+            throw new RuntimeException("issue not found");
+        }
+
+        if(!issue.getUserId().equals(id)){
+
+            throw new RuntimeException("no permission");
+        }
+
+        if(!issue.getStatus().equals(IssueStatusEnum.PENDING.getStatus())){
+            throw new RuntimeException("issue not in pending status");
+        }
+
+        // delete issue
+        issueMapper.delete(issueId);
+
+
+
+    }
 }
