@@ -2,21 +2,30 @@ package group4.backend.service.impl;
 
 import group4.backend.dto.IssueAddOrUpdateDto;
 import group4.backend.entity.Issue;
+import group4.backend.entity.IssuePicture;
 import group4.backend.enums.IssueStatusEnum;
 import group4.backend.mapper.IssueMapper;
+import group4.backend.mapper.IssuePictureMapper;
 import group4.backend.service.IssueService;
+import group4.backend.vo.IssueVo;
 import org.checkerframework.checker.units.qual.A;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class IssueServiceImpl implements IssueService {
 
     @Autowired
     IssueMapper issueMapper;
+
+    @Autowired
+    IssuePictureMapper issuePictureMapper;
 
 
     // add or update issue
@@ -86,5 +95,40 @@ public class IssueServiceImpl implements IssueService {
 
 
 
+    }
+
+    @Override
+    public List<IssueVo> getIssuesByUserId(Long id) {
+
+
+     List<Issue>issues = issueMapper.selectByUserId(id);
+
+        // get issue pictures by issue id
+
+        List<IssueVo> issueVos = issues.stream().map((issue) -> {
+
+
+            List<IssuePicture> issuePictures = issuePictureMapper.selectByIssueId(issue.getId());
+
+
+            // get issue pictures url
+            List<String> urls = issuePictures.stream().map(IssuePicture::getUrl).toList();
+
+
+            IssueVo issueVo = new IssueVo();
+
+            BeanUtils.copyProperties(issue, issueVo);
+
+            issueVo.setUrls(urls);
+
+            return issueVo;
+
+
+        }).toList();
+
+
+
+
+        return issueVos;
     }
 }

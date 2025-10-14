@@ -5,11 +5,10 @@ import group4.backend.dto.UserLoginDto;
 import group4.backend.dto.UserRegisterDto;
 import group4.backend.service.UserService;
 import group4.backend.util.R;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/user")
@@ -18,6 +17,9 @@ public class UserController {
 
     @Autowired
     UserService userService;
+
+    @Autowired
+    StringRedisTemplate stringRedisTemplate;
 
 
     // register function
@@ -47,6 +49,23 @@ public class UserController {
 
         return R.ok(token);
 
+
+    }
+
+    // logout
+    @GetMapping("/logout")
+    public R logout(HttpServletRequest httpServletRequest){
+
+
+
+        // get token from header
+        String token = httpServletRequest.getHeader("token");
+
+        // delete token
+        stringRedisTemplate.delete(token);
+
+
+        return R.ok();
 
     }
 

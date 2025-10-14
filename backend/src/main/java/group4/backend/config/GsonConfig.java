@@ -13,6 +13,8 @@ import java.time.format.DateTimeFormatter;
 @Configuration
 public class GsonConfig {
 
+
+    // serialize and deserialize localdate and localdatetime
     @Bean
     public Gson gson() {
         return new GsonBuilder()

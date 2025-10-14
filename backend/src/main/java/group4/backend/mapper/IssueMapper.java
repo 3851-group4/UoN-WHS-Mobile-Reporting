@@ -3,6 +3,8 @@ package group4.backend.mapper;
 import group4.backend.entity.Issue;
 import org.apache.ibatis.annotations.*;
 
+import java.util.List;
+
 @Mapper
 public interface IssueMapper  {
 
@@ -19,4 +21,7 @@ public interface IssueMapper  {
 
     @Delete("delete from issue where id=#{issueId}")
     void delete(Long issueId);
+
+    @Select("select * from issue where user_id=#{id}")
+    List<Issue> selectByUserId(Long id);
 }
