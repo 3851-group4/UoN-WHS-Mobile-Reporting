@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Configuration;
 public class MinioConfig {
 
     @Value("${minio.endpoint}")
-    private String endpoint;
+    private String endpoint="test";
 
     @Value("${minio.access-key}")
     private String accessKey;

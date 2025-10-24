@@ -59,7 +59,7 @@ public class UserServiceImpl implements UserService {
         user.setUpdateTime(LocalDateTime.now());
 
         userMapper.insert(user);
-
+ 
 
     }
 
