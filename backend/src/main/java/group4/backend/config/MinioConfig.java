@@ -12,10 +12,10 @@ public class MinioConfig {
     private String endpoint="test";
 
     @Value("${minio.access-key}")
-    private String accessKey;
+    private String accessKey=System.getenv("MINIO_ACCESS_KEY");
 
     @Value("${minio.secret-key}")
-    private String secretKey;
+    private String secretKey=System.getenv("MINIO_SECRET_KEY");
 
     @Bean
     public MinioClient minioClient() {
