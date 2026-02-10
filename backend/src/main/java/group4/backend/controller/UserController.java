@@ -1,6 +1,7 @@
 package group4.backend.controller;
 
 
+import group4.backend.dto.UserInfoDto;
 import group4.backend.dto.UserLoginDto;
 import group4.backend.dto.UserRegisterDto;
 import group4.backend.service.UserService;
@@ -68,6 +69,25 @@ public class UserController {
         return R.ok();
 
     }
+
+
+    // get user info
+    @GetMapping("/get/user")
+    public R getInfo(HttpServletRequest httpServletRequest){
+
+
+
+        // get token from header
+        String token = httpServletRequest.getHeader("token");
+
+        // get user info from token
+        UserInfoDto user = userService.getInfo(token);
+
+        return R.ok(user);
+
+
+    }
+
 
 
 

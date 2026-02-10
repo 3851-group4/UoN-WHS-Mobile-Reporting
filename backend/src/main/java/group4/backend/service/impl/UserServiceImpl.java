@@ -2,6 +2,7 @@ package group4.backend.service.impl;
 
 
 import com.google.gson.Gson;
+import group4.backend.dto.UserInfoDto;
 import group4.backend.dto.UserLoginDto;
 import group4.backend.dto.UserRegisterDto;
 import group4.backend.entity.User;
@@ -100,5 +101,25 @@ public class UserServiceImpl implements UserService {
 
 
 
+    }
+
+    @Override
+    public UserInfoDto getInfo(String token) {
+
+        if (token == null || token.isEmpty()) {
+            throw new RuntimeException("token expired");
+        }
+
+        String userJson = stringRedisTemplate.opsForValue().get(token);
+        if(userJson==null){
+            throw new RuntimeException("token error");
+        }
+
+        User user = gson.fromJson(userJson, User.class);
+        UserInfoDto userInfoDto = new UserInfoDto();
+        BeanUtils.copyProperties(user,userInfoDto);
+
+
+        return userInfoDto;
     }
 }

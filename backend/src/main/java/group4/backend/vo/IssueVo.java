@@ -20,7 +20,7 @@ public class IssueVo {
         List<String> urls;
 
 
-        private String test;
+
 
 
 }
