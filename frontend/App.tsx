@@ -1,57 +1,85 @@
 import type { FC } from "react";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, useLocation } from "react-router-dom";
 import { Container, Typography, Box, Paper } from "@mui/material";
 import Login from "./Login";
 import Register from "./Register";
 import Welcome from "./Welcome";
 
 const App: FC = () => {
+    const location = useLocation();
+    
+    // 判断是否是 Welcome 相关页面（用于控制布局）
+    // Judge if this is the page of welcome
+    const isWelcomePage = location.pathname.startsWith("/welcome");
+
     return (
-        <Routes>
-            {/* Auth routes with container */}
-            <Route path="/login" element={
-                <Container maxWidth="md" sx={{ mt: 6 }}>
+        <Box
+            sx={{
+        minHeight: "100vh",
+        position: "relative",
+        paddingTop: isWelcomePage ? "0px" : "40px",
+        paddingBottom: isWelcomePage ? "0px" : "40px",
+        "&::before": {
+            content: '""',
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundImage: `url('/image/campus.jpg')`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            backgroundAttachment: "fixed",
+            filter: "blur(2.5px)", 
+            zIndex: -1,
+        },
+        "&::after": {
+            content: '""',
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0, 0, 0, 0.4)",
+            zIndex: -1,
+        }
+            }}
+        >
+            {isWelcomePage ? (
+                // Welcome page and its subs
+                <Routes>
+                    <Route path="/welcome/*" element={<Welcome />} />
+                </Routes>
+            ) : (
+                // Login and Register
+                <Container maxWidth="md">
                     <Paper elevation={3} sx={{ p: 4, borderRadius: 2 }}>
-                        <Typography variant="h4" align="center" gutterBottom>
-                            Welcome to UON Safety Platform
-                        </Typography>
-                        <Box mt={4}>
-                            <Login />
+                        <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
+                            <Box
+                                component="img"
+                                src="/uon-logo-square.png"
+                                alt="UON Logo"
+                                sx={{
+                                    height: 100,
+                                    width: 100,
+                                    mr: 3,
+                                }}
+                            />
+                            <Typography variant="h4" sx={{ fontWeight: 500 }}>
+                                Welcome to UON Safety Platform
+                            </Typography>
+                        </Box>
+                        <Box>
+                            <Routes>
+                                <Route index element={<Login />} />
+                                <Route path="/login" element={<Login />} />
+                                <Route path="/register" element={<Register />} />
+                            </Routes>
                         </Box>
                     </Paper>
                 </Container>
-            } />
-            
-            <Route path="/register" element={
-                <Container maxWidth="md" sx={{ mt: 6 }}>
-                    <Paper elevation={3} sx={{ p: 4, borderRadius: 2 }}>
-                        <Typography variant="h4" align="center" gutterBottom>
-                            Welcome to UON Safety Platform
-                        </Typography>
-                        <Box mt={4}>
-                            <Register />
-                        </Box>
-                    </Paper>
-                </Container>
-            } />
-
-            {/* Default route */}
-            <Route index element={
-                <Container maxWidth="md" sx={{ mt: 6 }}>
-                    <Paper elevation={3} sx={{ p: 4, borderRadius: 2 }}>
-                        <Typography variant="h4" align="center" gutterBottom>
-                            Welcome to UON Safety Platform
-                        </Typography>
-                        <Box mt={4}>
-                            <Login />
-                        </Box>
-                    </Paper>
-                </Container>
-            } />
-
-            {/* Welcome page route - no container wrapper needed as Welcome has its own layout */}
-            <Route path="/welcome" element={<Welcome />} />
-        </Routes>
+            )}
+        </Box>
     );
 };
 
