@@ -1,6 +1,7 @@
 package group4.backend.controller;
 
 
+import group4.backend.aop.AuthCheck;
 import group4.backend.dto.UserInfoDto;
 import group4.backend.dto.UserLoginDto;
 import group4.backend.dto.UserRegisterDto;
