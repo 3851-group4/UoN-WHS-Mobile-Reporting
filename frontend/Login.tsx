@@ -1,6 +1,7 @@
+
 import React, { useState } from "react";
 import type { FC } from "react";
-import { TextField, Button, Container, Paper, Typography, Alert, Box, Link } from "@mui/material";
+import { TextField, Button, Typography, Alert, Box, Link } from "@mui/material";
 import { useNavigate, Link as RouterLink } from "react-router-dom";
 import api from "./request";
 
@@ -36,8 +37,7 @@ const Login: FC = () => {
   }
 
   return (
-    <Container maxWidth="sm" sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh" }}>
-      <Paper elevation={3} sx={{ padding: 4, borderRadius: 2, width: "100%", maxWidth: 400 }}>
+    <Box sx={{ maxWidth: 500, mx: "auto" }}>
         <Typography variant="h5" align="center" gutterBottom>
           Login
         </Typography>
@@ -72,7 +72,14 @@ const Login: FC = () => {
             type="submit"
             fullWidth
             variant="contained"
-            sx={{ mt: 2, mb: 2 }}
+          sx={{ 
+            mt: 2, 
+            mb: 2,
+            width: "60%",      
+            mx: "auto",          
+            display: "block",    
+            py: 1.5, 
+            }}
           >
             Login
           </Button>
@@ -88,9 +95,10 @@ const Login: FC = () => {
             </Link>
           </Typography>
         </Box>
-      </Paper>
-    </Container>
+      
+    </Box>
   );
 };
 
 export default Login;
+
