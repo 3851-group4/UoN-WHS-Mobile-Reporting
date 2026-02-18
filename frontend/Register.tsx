@@ -1,8 +1,9 @@
 import React, { useState } from "react";
 import type { FC } from "react";
-import { TextField, Button, Container, Paper, Typography, Alert, Box } from "@mui/material";
-import { useNavigate } from "react-router-dom";
+import { TextField, Button, Typography, Alert, Box, Link } from "@mui/material";
+
 import api from "./request.ts";
+import { useNavigate, Link as RouterLink } from "react-router-dom";
 
 const Register: FC = () => {
   const [email, setEmail] = useState<string>("");
@@ -16,12 +17,22 @@ const Register: FC = () => {
 
   const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (password.length < 8) {
+    setErrorMsg("Password must be at least 8 characters long");
+    return;
+  }
 
     if (password !== confirmPassword) {
       setErrorMsg("The password you conform must be same");
       setConfirmPassword("");
       return;
     }
+  const hasUpperCase = /[A-Z]/.test(password);
+  const hasLowerCase = /[a-z]/.test(password);
+    if (!hasUpperCase || !hasLowerCase) {
+    setErrorMsg("Password must contain at least one uppercase and one lowercase letter");
+    return;
+  }
 
 try {
   const res = await api.post("/user/register", {
@@ -44,16 +55,8 @@ try {
   }
 
   return (
-    <Container
-      maxWidth="sm"
-      sx={{
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        minHeight: "100vh",
-      }}
-    >
-      <Paper elevation={3} sx={{ padding: 4, borderRadius: 2, width: "100%", maxWidth: 400 }}>
+    <Box sx={{ maxWidth: 500, mx: "auto" }}>
+      
         <Typography variant="h5" align="center" gutterBottom>
           User registration
         </Typography>
@@ -113,12 +116,31 @@ try {
             required
           />
 
-          <Button type="submit" fullWidth variant="contained" sx={{ mt: 2, mb: 2 }}>
+          <Button type="submit" variant="contained" 
+          sx={{ 
+            mt: 2, 
+            mb: 2,
+            width: "60%",        
+            mx: "auto",          
+            display: "block",    
+            py: 1.5, 
+            
+            }}>
             Register
           </Button>
+          <Typography align="center">
+            <Link
+              component={RouterLink}
+              to="/login"
+              underline="hover"
+              sx={{ color: "success.main" }}
+            >
+              Already have an account? Login here
+            </Link>
+          </Typography>
         </Box>
-      </Paper>
-    </Container>
+      </Box>
+   
   );
 };
 
