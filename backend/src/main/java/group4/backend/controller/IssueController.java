@@ -29,6 +29,69 @@ public class IssueController {
     @Autowired
     Gson gson;
 
+    // add or update issue
+    @PostMapping("/upsert")
+    public R addIssue(@RequestBody IssueAddOrUpdateDto issueAddOrUpdateDto, HttpServletRequest request){
+
+
+        // get token from header
+        String token = request.getHeader("token");
+
+        // get user info from token
+        String info = stringRedisTemplate.opsForValue().get(token);
+        User user = gson.fromJson(info, User.class);
+
+        // add or update issue
+        Long id =  issueService.upsertIssue(user.getId(),issueAddOrUpdateDto);
+
+
+        return R.ok(id);
+
+    }
+
+    // delete issue
+    @DeleteMapping("/delete/{issueId}")
+    public R deleteIssue(@PathVariable Long issueId, HttpServletRequest request){
+
+
+        // get token from header
+        String token = request.getHeader("token");
+
+        // get user info from token
+        String info = stringRedisTemplate.opsForValue().get(token);
+        User user = gson.fromJson(info, User.class);
+
+
+        // delete issue
+
+        issueService.deleteIssue(user.getId(),issueId);
+
+
+        return R.ok();
+
+
+    }
+
+
+    // query current user issue
+    @GetMapping("/view")
+    public R viewIssue(HttpServletRequest request) {
+
+
+        // get token from header
+        String token = request.getHeader("token");
+
+        // get user info from token
+        String info = stringRedisTemplate.opsForValue().get(token);
+        User user = gson.fromJson(info, User.class);
+
+
+        List<IssueVo> issueVoList =  issueService.getIssuesByUserId(user.getId());
+
+
+        return R.ok(issueVoList);
+
+    }
 
 
 }
