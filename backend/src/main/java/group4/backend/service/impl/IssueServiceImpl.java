@@ -28,6 +28,8 @@ public class IssueServiceImpl implements IssueService {
     IssuePictureMapper issuePictureMapper;
 
 
+
+
     // add or update issue
     @Override
     public Long upsertIssue(Long id, IssueAddOrUpdateDto issueAddOrUpdateDto) {
@@ -51,13 +53,13 @@ public class IssueServiceImpl implements IssueService {
         else {
             // update issue
 
-          Issue issue1 =  issueMapper.selectById(issue.getId());
-          if(issue1==null) {
-              throw new RuntimeException("issue not found");
-          }
-          if(!issue1.getStatus().equals(IssueStatusEnum.PENDING.getStatus())){
-              throw new RuntimeException("issue not in pending status");
-          }
+            Issue issue1 =  issueMapper.selectById(issue.getId());
+            if(issue1==null) {
+                throw new RuntimeException("issue not found");
+            }
+            if(!issue1.getStatus().equals(IssueStatusEnum.PENDING.getStatus())){
+                throw new RuntimeException("issue not in pending status");
+            }
             issue.setUpdateTime(LocalDateTime.now());
 
             issueMapper.update(issue);
@@ -101,7 +103,7 @@ public class IssueServiceImpl implements IssueService {
     public List<IssueVo> getIssuesByUserId(Long id) {
 
 
-     List<Issue>issues = issueMapper.selectByUserId(id);
+        List<Issue>issues = issueMapper.selectByUserId(id);
 
         // get issue pictures by issue id
 

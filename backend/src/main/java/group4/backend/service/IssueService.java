@@ -6,6 +6,8 @@ import group4.backend.vo.IssueVo;
 import java.util.List;
 
 public interface IssueService {
+
+
     Long upsertIssue(Long id, IssueAddOrUpdateDto issueAddOrUpdateDto);
 
     void deleteIssue(Long id, Long issueId);
