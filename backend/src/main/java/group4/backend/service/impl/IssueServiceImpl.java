@@ -126,7 +126,7 @@ public class IssueServiceImpl implements IssueService {
             return issueVo;
 
 
-        }).toList();
+        }).collect(Collectors.toList());
 
 
 

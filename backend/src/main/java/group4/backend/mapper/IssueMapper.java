@@ -9,7 +9,7 @@ import java.util.List;
 public interface IssueMapper  {
 
 
-    @Insert("insert into issue(user_id,title,description,location,status,happen_time,create_time,update_time) values(#{userId},#{title},#{description},#{location},#{status},#{happenTime},#{createTime},#{updateTime})")
+    @Insert("insert into issue(user_id,title,brief,description,location,status,happen_time,create_time,update_time) values(#{userId},#{title},#{brief},#{description},#{location},#{status},#{happenTime},#{createTime},#{updateTime})")
     @Options(useGeneratedKeys = true, keyProperty = "id")
     void insert(Issue issue);
 
