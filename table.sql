@@ -22,9 +22,11 @@ create table if not exists issue
     id           bigint auto_increment comment 'id' primary key,
     user_id      bigint                                not null comment 'user id',
     title        varchar(100)                          not null comment 'issue title',
+    brief        varchar(1000)                          not null comment 'issue brief',
     description  text                                  not null comment 'issue description',
     location     varchar(512)                          not null comment 'issue location',
     status       varchar(20) default 'pending'             not null comment 'status',
+    witness_info text                                   comment 'issue witness info',
     happen_time  datetime     default CURRENT_TIMESTAMP not null comment 'issue happen time',
     create_time  datetime     default CURRENT_TIMESTAMP not null comment 'create time',
     update_time  datetime     default CURRENT_TIMESTAMP not null on update CURRENT_TIMESTAMP comment 'update time'
