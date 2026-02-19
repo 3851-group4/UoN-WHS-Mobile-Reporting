@@ -47,7 +47,7 @@ interface Report {
 }
 
 const ViewIssues: React.FC = () => {
-  // 🧪 示例数据
+  // Sample
   const [reports, setReports] = useState<Report[]>([
     {
       id: 1,
@@ -80,7 +80,7 @@ const ViewIssues: React.FC = () => {
     },
   ]);
 
-  // 对话框状态
+  // The status of window
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -88,22 +88,22 @@ const ViewIssues: React.FC = () => {
   const [editedReport, setEditedReport] = useState<Report | null>(null);
   const [successMessage, setSuccessMessage] = useState('');
 
-  // 图片预览
+  // preview image
   const [previewImage, setPreviewImage] = useState<string | null>(null);
 
-  // 查看详情
+  // detail
   const handleViewReport = (report: Report) => {
     setSelectedReport(report);
     setViewDialogOpen(true);
   };
 
-  // 编辑报告
+  // Edir report
   const handleEditReport = (report: Report) => {
     setEditedReport({ ...report });
     setEditDialogOpen(true);
   };
 
-  // 添加图片
+  // Add more images
   const handleAddImage = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0] && editedReport) {
       const file = event.target.files[0];
@@ -126,7 +126,7 @@ const ViewIssues: React.FC = () => {
     }
   };
 
-  // 保存编辑
+  // Save
   const handleSaveEdit = () => {
     if (editedReport) {
       setReports(reports.map(r => r.id === editedReport.id ? editedReport : r));
@@ -136,7 +136,7 @@ const ViewIssues: React.FC = () => {
     }
   };
 
-  // 删除报告（取消报告）
+  // 删Delete
   const handleDeleteReport = (report: Report) => {
     setSelectedReport(report);
     setDeleteDialogOpen(true);
@@ -167,7 +167,7 @@ const ViewIssues: React.FC = () => {
 
   return (
     <Box sx={{ width: '100%' }}>
-      {/* 标题 */}
+      {/* title */}
       <Box sx={{ mb: 3 }}>
         <Typography variant="h4" sx={{ fontWeight: 600, color: '#fff', mb: 1 }}>
           My Reports
@@ -177,14 +177,14 @@ const ViewIssues: React.FC = () => {
         </Typography>
       </Box>
 
-      {/* 成功消息 */}
+      {/* Successful */}
       {successMessage && (
         <Alert severity="success" sx={{ mb: 2 }} onClose={() => setSuccessMessage('')}>
           {successMessage}
         </Alert>
       )}
 
-      {/* 报告列表 */}
+      {/* Report  */}
       <TableContainer component={Paper} elevation={3}>
         <Table>
           <TableHead>
@@ -595,5 +595,6 @@ const ViewIssues: React.FC = () => {
     </Box>
   );
 };
+
 
 export default ViewIssues;
