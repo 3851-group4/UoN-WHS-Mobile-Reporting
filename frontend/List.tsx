@@ -32,7 +32,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import AddPhotoAlternateIcon from '@mui/icons-material/AddPhotoAlternate';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 
-// 报告接口定义
+// Api report
 interface Report {
   id: number;
   title: string;
@@ -43,7 +43,7 @@ interface Report {
   submittedDate: string;
   submittedTime: string;
   submittedBy: string;
-  images: string[];  // 图片 URL 数组
+  images: string[];  // iMAGE URL
 }
 
 const ViewIssues: React.FC = () => {
@@ -118,7 +118,7 @@ const ViewIssues: React.FC = () => {
     }
   };
 
-  // 删除图片
+  // Delete image
   const handleDeleteImage = (index: number) => {
     if (editedReport) {
       const newImages = editedReport.images.filter((_, i) => i !== index);
@@ -136,7 +136,7 @@ const ViewIssues: React.FC = () => {
     }
   };
 
-  // 删Delete
+  // Delete
   const handleDeleteReport = (report: Report) => {
     setSelectedReport(report);
     setDeleteDialogOpen(true);
@@ -154,7 +154,7 @@ const ViewIssues: React.FC = () => {
     }
   };
 
-  // 状态颜色映射
+ 
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'Pending': return 'warning';
@@ -278,7 +278,7 @@ const ViewIssues: React.FC = () => {
         </Table>
       </TableContainer>
 
-      {/* 查看详情对话框 */}
+      {/* View details */}
       <Dialog 
         open={viewDialogOpen} 
         onClose={() => setViewDialogOpen(false)}
@@ -345,7 +345,7 @@ const ViewIssues: React.FC = () => {
                 </Typography>
               </Grid>
 
-              {/* 图片展示 */}
+              {/* Display image*/}
               {selectedReport.images.length > 0 && (
                 <Grid item xs={12}>
                   <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
@@ -380,7 +380,7 @@ const ViewIssues: React.FC = () => {
         </DialogActions>
       </Dialog>
 
-      {/* 编辑对话框 */}
+      {/* Edit dialog */}
       <Dialog 
         open={editDialogOpen} 
         onClose={() => setEditDialogOpen(false)}
@@ -425,7 +425,7 @@ const ViewIssues: React.FC = () => {
                 />
               </Grid>
 
-              {/* 日期和时间 */}
+              {/* Date and time */}
               <Grid item xs={6}>
                 <TextField
                   fullWidth
@@ -459,7 +459,7 @@ const ViewIssues: React.FC = () => {
                 />
               </Grid>
 
-              {/* 图片管理 */}
+              {/* Manage images */}
               <Grid item xs={12}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
                   <Typography variant="subtitle2" color="text.secondary">
@@ -536,7 +536,7 @@ const ViewIssues: React.FC = () => {
         </DialogActions>
       </Dialog>
 
-      {/* 删除确认对话框 */}
+      {/* Delete dialog window */}
       <Dialog 
         open={deleteDialogOpen} 
         onClose={() => setDeleteDialogOpen(false)}
@@ -567,7 +567,7 @@ const ViewIssues: React.FC = () => {
         </DialogActions>
       </Dialog>
 
-      {/* 图片预览对话框 */}
+      {/* Preview image window */}
       <Dialog
         open={!!previewImage}
         onClose={() => setPreviewImage(null)}
@@ -598,3 +598,4 @@ const ViewIssues: React.FC = () => {
 
 
 export default ViewIssues;
+
