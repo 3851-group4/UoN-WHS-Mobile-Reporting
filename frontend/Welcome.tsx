@@ -33,7 +33,7 @@ import Issuelist from "./List";
 
 const drawerWidth = 220;
 
-// 首页内容组件
+// Homepage
 const HomePage: React.FC = () => {
   return (
     <>
@@ -140,23 +140,23 @@ const Welcome: React.FC<WelcomeProps> = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // 🧪 测试模式：用于切换角色
+  // Test mode
   const [testMode, setTestMode] = useState(true);
   const [mockRole, setMockRole] = useState<'admin' | 'user'>('user');
   const [userRole, setUserRole] = useState<'admin' | 'user'>('user');
 
-  // 获取用户角色
+  // Get the status of user
   useEffect(() => {
     if (testMode) {
-      // 测试模式：使用 Mock 角色
+      //Mock
       setUserRole(mockRole);
     } else {
-      // 生产模式：从后端获取用户信息
+      //Actual
       fetchUserRole();
     }
   }, [testMode, mockRole]);
 
-  // 🌐 真实模式：调用后端获取用户角色
+  // Actual
   const fetchUserRole = async () => {
     try {
       const token = localStorage.getItem('token');
@@ -196,16 +196,16 @@ const Welcome: React.FC<WelcomeProps> = ({ children }) => {
     navigate("/login");
   };
 
-  // 🔑 根据角色定义菜单项
+  // Different pages
   const getMenuItems = () => {
     if (userRole === 'admin') {
-      // Admin 用户只显示 Admin 页面
+      // Admin page
       return [
         { text: "Admin", icon: <AdminPanelSettingsIcon />, path: "/welcome/admin" },
         { text: "Issues", icon: <ListAltIcon />, path: "/welcome/viewissues" },
       ];
     } else {
-      // 普通用户显示 4 个页面
+      // User page
       return [
         { text: "Home page", icon: <HomeIcon />, path: "/welcome" },
         { text: "Report", icon: <AssignmentIcon />, path: "/welcome/user/report" },
@@ -219,7 +219,7 @@ const Welcome: React.FC<WelcomeProps> = ({ children }) => {
 
   return (
     <Box sx={{ position: "relative", width: "100%", height: "100%" }}>
-      {/* 🧪 测试控制面板 */}
+      {/* Test board */}
       {testMode && (
         <Paper
           sx={{
@@ -274,7 +274,7 @@ const Welcome: React.FC<WelcomeProps> = ({ children }) => {
         </Paper>
       )}
 
-      {/* Logout 按钮 */}
+      {/* Logout button */}
       <Box
         sx={{
           position: "fixed",
@@ -301,7 +301,7 @@ const Welcome: React.FC<WelcomeProps> = ({ children }) => {
       </Box>
 
       <Box sx={{ display: "flex" }}>
-        {/* 左侧导航 */}
+        {/* Left menu */}
         <Drawer
           variant="permanent"
           sx={{
@@ -320,7 +320,7 @@ const Welcome: React.FC<WelcomeProps> = ({ children }) => {
             },
           }}
         >
-          {/* 用户角色标识 */}
+          {/* Role */}
           <Box sx={{ p: 2, borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
             <Typography variant="subtitle2" sx={{ opacity: 0.7 }}>
               Role
@@ -353,7 +353,7 @@ const Welcome: React.FC<WelcomeProps> = ({ children }) => {
           </List>
         </Drawer>
 
-        {/* 主内容区域 */}
+        {/* Main page */}
         <Box
           component="main"
           sx={{
@@ -364,7 +364,7 @@ const Welcome: React.FC<WelcomeProps> = ({ children }) => {
           }}
         >
           <Routes>
-            {/* 根据角色显示不同的首页 */}
+            {/* Different pages */}
             {userRole === 'user' && (
               <>
                 <Route index element={<HomePage />} />
@@ -389,3 +389,4 @@ const Welcome: React.FC<WelcomeProps> = ({ children }) => {
 };
 
 export default Welcome;
+
