@@ -172,7 +172,7 @@ const Reporting: React.FC = () => {
 <Typography
   variant="h3"
   sx={{
-    color: "#06b6d4",  // 青色
+    color: "white",  
     fontWeight: 650,
     mb: 1.5,
     textShadow: "0 4px 16px rgba(6, 182, 212, 0.5)",
@@ -326,7 +326,7 @@ const Reporting: React.FC = () => {
               <TextField
                 required
                 fullWidth
-                label="Iccident Location"
+                label="Incident Location"
                 name="issueLocation"
                 value={formData.issueLocation}
                 onChange={handleChange}
