@@ -33,7 +33,7 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
 import EditIcon from '@mui/icons-material/Edit';
 
-// 报告接口定义 API 
+// definition of API 
 interface Report {
   id: number;
   title: string;
@@ -107,33 +107,33 @@ const ManageIssues: React.FC = () => {
     },
   ]);
 
-  // 对话框状态
+  // Status
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
   const [statusDialogOpen, setStatusDialogOpen] = useState(false);
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
   const [newStatus, setNewStatus] = useState<Report['status']>('Pending');
   const [successMessage, setSuccessMessage] = useState('');
 
-  // 图片预览 preview image
+  //  preview image
   const [previewImage, setPreviewImage] = useState<string | null>(null);
 
-  // 过滤器 filter
+  //  filter
   const [statusFilter, setStatusFilter] = useState<string>('All');
 
-  // 查看详情 view report
+  //  view report
   const handleViewReport = (report: Report) => {
     setSelectedReport(report);
     setViewDialogOpen(true);
   };
 
-  // 更新状态 uodate status
+  //update status
   const handleUpdateStatus = (report: Report) => {
     setSelectedReport(report);
     setNewStatus(report.status);
     setStatusDialogOpen(true);
   };
 
-  // 确认更新状态 confirm
+  //  confirm
   const confirmUpdateStatus = () => {
     if (selectedReport) {
       setReports(reports.map(r => 
@@ -146,7 +146,7 @@ const ManageIssues: React.FC = () => {
     }
   };
 
-  // 状态颜色映射 color
+  // color
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'Pending': return 'warning';
@@ -156,7 +156,7 @@ const ManageIssues: React.FC = () => {
     }
   };
 
-  // 状态图标映射 status icon
+  //  status icon
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'Pending': return <HourglassEmptyIcon fontSize="small" />;
@@ -167,12 +167,12 @@ const ManageIssues: React.FC = () => {
     }
   };
 
-  // 过滤报告 filter of report
+  // filter of report
   const filteredReports = statusFilter === 'All' 
     ? reports 
     : reports.filter(r => r.status === statusFilter);
 
-  // 统计数据 data
+  //  data
   const stats = {
     total: reports.length,
     pending: reports.filter(r => r.status === 'Pending').length,
@@ -243,7 +243,7 @@ const ManageIssues: React.FC = () => {
         </Grid>
       </Grid>
 
-      {/* 过滤器 */}
+      {/* Filter */}
 <Box sx={{ mb: 2, display: 'flex', justifyContent: 'flex-end' }}>
   <Select
     value={statusFilter}
@@ -261,7 +261,7 @@ const ManageIssues: React.FC = () => {
   </Select>
 </Box>
 
-      {/* 报告列表 */}
+      {/* The list of report*/}
       <TableContainer component={Paper} elevation={3}>
         <Table>
           <TableHead>
@@ -366,7 +366,7 @@ const ManageIssues: React.FC = () => {
         </Table>
       </TableContainer>
 
-      {/* 查看详情对话框 View the details */}
+      {/* View the details */}
       <Dialog 
         open={viewDialogOpen} 
         onClose={() => setViewDialogOpen(false)}
@@ -487,7 +487,7 @@ const ManageIssues: React.FC = () => {
         </DialogActions>
       </Dialog>
 
-      {/* 更新状态对话框 Update status */}
+      {/* Update status */}
       <Dialog 
         open={statusDialogOpen} 
         onClose={() => setStatusDialogOpen(false)}
@@ -562,7 +562,7 @@ const ManageIssues: React.FC = () => {
         </DialogActions>
       </Dialog>
 
-      {/* 图片预览对话框 preview image  */}
+      {/*  preview image  */}
       <Dialog
         open={!!previewImage}
         onClose={() => setPreviewImage(null)}
@@ -593,3 +593,4 @@ const ManageIssues: React.FC = () => {
 
 
 export default ManageIssues;
+
