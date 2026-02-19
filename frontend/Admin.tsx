@@ -17,26 +17,26 @@ const AdminPage: React.FC = () => {
   const [error, setError] = useState('');
   const [userInfo, setUserInfo] = useState<any>(null);
 
-  // 测试模式开关
+  // Switch
   const [testMode, setTestMode] = useState(true);
   const [mockRole, setMockRole] = useState<'admin' | 'user'>('admin');
 
   useEffect(() => {
     if (testMode) {
-      // 测试模式：使用 Mock 数据  Mock
+      //   Mock
       checkAdminPermissionMock();
     } else {
-      // 真实模式：调用后端 API    True
+      //   Real version
       checkAdminPermission();
     }
   }, [mockRole, testMode]);
 
-  //  Mock 版本 - 用于测试 Use for test
+  //  Mock version -  Use for test
   const checkAdminPermissionMock = async () => {
     setLoading(true);
     setError('');
 
-    // 模拟网络延迟 Mock ping
+    //  Mock ping
     await new Promise(resolve => setTimeout(resolve, 1000));
 
     // Mock data
@@ -55,7 +55,7 @@ const AdminPage: React.FC = () => {
 
     const mockData = mockUsers[mockRole];
 
-    // 模拟响应
+   
     const result = {
       code: 200,
       data: mockData
@@ -75,7 +75,7 @@ const AdminPage: React.FC = () => {
     }
   };
 
-  //  真实版本 - 调用后端 API  Real version to use API
+  //   Real version to use API
   const checkAdminPermission = async () => {
     setLoading(true);
     setError('');
@@ -148,7 +148,7 @@ const AdminPage: React.FC = () => {
     );
   }
 
-  // 错误状态 error
+  //  error
 if (error) {
   return (
     <Box 
@@ -193,7 +193,7 @@ if (error) {
   );
 }
 
-  // Admin main page 页面主内容
+  // Admin main page 
   return (
       <Box sx={{ 
     p: 3, 
@@ -203,12 +203,12 @@ if (error) {
   }}>
 
 
-      {/* 页面标题 title */}
+      {/*  title */}
       <Typography variant="h4" sx={{ mb: 3 }}>
         Admin Dashboard
       </Typography>
 
-      {/* 用户信息卡片 information */}
+      {/* User information */}
       <Paper sx={{ mb: 4, p: 3, bgcolor: 'rgba(255,255,255,0.1)' }}>
         <Typography variant="h6" sx={{ mb: 2 }}>
           👤 Current User Information
@@ -228,4 +228,5 @@ if (error) {
 
 
 export default AdminPage;
+
 
