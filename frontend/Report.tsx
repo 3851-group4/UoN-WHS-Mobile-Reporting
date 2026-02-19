@@ -137,7 +137,7 @@ const Reporting: React.FC = () => {
     }
   };
 
-  // 卡片样式配置
+  // Cards
   const cardStyle = {
     p: 4,
     backgroundColor: "#fff",
@@ -168,7 +168,7 @@ const Reporting: React.FC = () => {
         p: { xs: 2, sm: 3, md: 4 },
       }}
     >
-      {/* 页面标题 */}
+      {/* Title */}
 <Typography
   variant="h3"
   sx={{
@@ -183,7 +183,7 @@ const Reporting: React.FC = () => {
 </Typography>
 
       <form onSubmit={handleSubmit}>
-        {/* 个人信息卡片 */}
+        {/* Personal information */}
         <Paper elevation={0} sx={{ ...cardStyle, mb: 3 }}>
           <Box sx={sectionHeaderStyle}>
             <Typography
@@ -309,7 +309,7 @@ const Reporting: React.FC = () => {
           </Grid>
         </Paper>
 
-        {/* 事件详情卡片 */}
+        {/* Details of iccident */}
         <Paper elevation={0} sx={{ ...cardStyle, mb: 3 }}>
           <Box sx={sectionHeaderStyle}>
             
@@ -480,7 +480,7 @@ const Reporting: React.FC = () => {
           </Grid>
         </Paper>
 
-        {/* 图片上传卡片 */}
+        {/* Upload image */}
         <Paper elevation={0} sx={{ ...cardStyle, mb: 4 }}>
           <Box sx={sectionHeaderStyle}>
             <ImageIcon sx={{ color: "#06b6d4", fontSize: 28 }} />
@@ -580,7 +580,7 @@ const Reporting: React.FC = () => {
           )}
         </Paper>
 
-        {/* 操作按钮 */}
+        {/* Button */}
         <Box
           sx={{
             display: "flex",
@@ -643,3 +643,4 @@ const Reporting: React.FC = () => {
 };
 
 export default Reporting;
+
