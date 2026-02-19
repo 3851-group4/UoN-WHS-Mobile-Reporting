@@ -55,7 +55,7 @@ const HomePage: React.FC = () => {
       </Paper>
 
       <Grid container spacing={3}>
-        {/* 4个卡片 */}
+        {/* 4 cards */}
         <Grid item xs={12} md={6} lg={3}>
           <Card elevation={2} sx={{ borderRadius: 2, height: "100%" }}>
             <CardContent>
@@ -389,4 +389,5 @@ const Welcome: React.FC<WelcomeProps> = ({ children }) => {
 };
 
 export default Welcome;
+
 
