@@ -33,7 +33,7 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
 import EditIcon from '@mui/icons-material/Edit';
 
-// 报告接口定义
+// 报告接口定义 API 
 interface Report {
   id: number;
   title: string;
@@ -48,7 +48,7 @@ interface Report {
 }
 
 const ManageIssues: React.FC = () => {
-  // 🧪 示例数据 - 包含所有用户的报告
+  // Sample data
   const [reports, setReports] = useState<Report[]>([
     {
       id: 1,
@@ -114,26 +114,26 @@ const ManageIssues: React.FC = () => {
   const [newStatus, setNewStatus] = useState<Report['status']>('Pending');
   const [successMessage, setSuccessMessage] = useState('');
 
-  // 图片预览
+  // 图片预览 preview image
   const [previewImage, setPreviewImage] = useState<string | null>(null);
 
-  // 过滤器
+  // 过滤器 filter
   const [statusFilter, setStatusFilter] = useState<string>('All');
 
-  // 查看详情
+  // 查看详情 view report
   const handleViewReport = (report: Report) => {
     setSelectedReport(report);
     setViewDialogOpen(true);
   };
 
-  // 更新状态
+  // 更新状态 uodate status
   const handleUpdateStatus = (report: Report) => {
     setSelectedReport(report);
     setNewStatus(report.status);
     setStatusDialogOpen(true);
   };
 
-  // 确认更新状态
+  // 确认更新状态 confirm
   const confirmUpdateStatus = () => {
     if (selectedReport) {
       setReports(reports.map(r => 
@@ -146,7 +146,7 @@ const ManageIssues: React.FC = () => {
     }
   };
 
-  // 状态颜色映射
+  // 状态颜色映射 color
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'Pending': return 'warning';
@@ -156,7 +156,7 @@ const ManageIssues: React.FC = () => {
     }
   };
 
-  // 状态图标映射
+  // 状态图标映射 status icon
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'Pending': return <HourglassEmptyIcon fontSize="small" />;
@@ -167,12 +167,12 @@ const ManageIssues: React.FC = () => {
     }
   };
 
-  // 过滤报告
+  // 过滤报告 filter of report
   const filteredReports = statusFilter === 'All' 
     ? reports 
     : reports.filter(r => r.status === statusFilter);
 
-  // 统计数据
+  // 统计数据 data
   const stats = {
     total: reports.length,
     pending: reports.filter(r => r.status === 'Pending').length,
@@ -182,7 +182,7 @@ const ManageIssues: React.FC = () => {
 
   return (
     <Box sx={{ width: '100%' }}>
-      {/* 标题 */}
+      {/* title */}
       <Box sx={{ mb: 3 }}>
         <Typography variant="h4" sx={{ fontWeight: 600, color: '#000', mb: 1 }}>
           Manage Issues
@@ -192,14 +192,14 @@ const ManageIssues: React.FC = () => {
         </Typography>
       </Box>
 
-      {/* 成功消息 */}
+      {/* Successful message */}
       {successMessage && (
         <Alert severity="success" sx={{ mb: 2 }} onClose={() => setSuccessMessage('')}>
           {successMessage}
         </Alert>
       )}
 
-      {/* 统计卡片 */}
+      {/* 统计卡片 Total cards*/}
       <Grid container spacing={2} sx={{ mb: 3 }}>
         <Grid item xs={12} sm={6} md={2.4}>
           <Paper sx={{ p: 2, textAlign: 'center', bgcolor: '#f5f5f5' }}>
@@ -366,7 +366,7 @@ const ManageIssues: React.FC = () => {
         </Table>
       </TableContainer>
 
-      {/* 查看详情对话框 */}
+      {/* 查看详情对话框 View the details */}
       <Dialog 
         open={viewDialogOpen} 
         onClose={() => setViewDialogOpen(false)}
@@ -440,7 +440,7 @@ const ManageIssues: React.FC = () => {
                 </Paper>
               </Grid>
 
-              {/* 图片展示 */}
+              {/* 图片展示 display pictures */}
               {selectedReport.images.length > 0 && (
                 <Grid item xs={12}>
                   <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
@@ -487,7 +487,7 @@ const ManageIssues: React.FC = () => {
         </DialogActions>
       </Dialog>
 
-      {/* 更新状态对话框 */}
+      {/* 更新状态对话框 Update status */}
       <Dialog 
         open={statusDialogOpen} 
         onClose={() => setStatusDialogOpen(false)}
@@ -562,7 +562,7 @@ const ManageIssues: React.FC = () => {
         </DialogActions>
       </Dialog>
 
-      {/* 图片预览对话框 */}
+      {/* 图片预览对话框 preview image  */}
       <Dialog
         open={!!previewImage}
         onClose={() => setPreviewImage(null)}
@@ -590,5 +590,6 @@ const ManageIssues: React.FC = () => {
     </Box>
   );
 };
+
 
 export default ManageIssues;
