@@ -148,7 +148,7 @@ const AdminPage: React.FC = () => {
     );
   }
 
-  // 错误状态
+  // 错误状态 error
 if (error) {
   return (
     <Box 
@@ -228,3 +228,4 @@ if (error) {
 
 
 export default AdminPage;
+
