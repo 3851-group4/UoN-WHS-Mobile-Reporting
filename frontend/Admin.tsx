@@ -169,7 +169,7 @@ if (error) {
       {testMode && (
         <Paper sx={{ p: 2, mt: 2, bgcolor: '#f5f5f5', border: '1px solid #e0e0e0' }}>
           <Typography variant="body2" sx={{ color: '#000', mb: 1 }}>
-            🧪 Test Mode: Try switching role
+            Test Mode: Try switching role
           </Typography>
           <Button 
             variant="contained" 
@@ -225,5 +225,6 @@ if (error) {
     </Box>
   );
 };
+
 
 export default AdminPage;
