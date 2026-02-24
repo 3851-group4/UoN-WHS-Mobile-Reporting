@@ -133,4 +133,24 @@ public class IssueServiceImpl implements IssueService {
 
         return issueVos;
     }
+
+    @Override
+    public List<IssueVo> getAllIssues() {
+
+        // select all issues
+        List<Issue> issues = issueMapper.selectAll();
+
+        // convert all issue to issueVo
+        List<IssueVo> issueVos = issues.stream().map((issue) -> {
+            List<IssuePicture> issuePictures = issuePictureMapper.selectByIssueId(issue.getId());
+            List<String> urls = issuePictures.stream().map(IssuePicture::getUrl).toList();
+
+            IssueVo issueVo = new IssueVo();
+            BeanUtils.copyProperties(issue, issueVo);
+            issueVo.setUrls(urls);
+            return issueVo;
+        }).collect(Collectors.toList());
+
+        return issueVos;
+    }
 }

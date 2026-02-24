@@ -13,4 +13,6 @@ public interface IssueService {
     void deleteIssue(Long id, Long issueId);
 
     List<IssueVo> getIssuesByUserId(Long id);
+
+    List<IssueVo> getAllIssues();
 }

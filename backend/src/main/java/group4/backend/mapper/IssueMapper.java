@@ -24,4 +24,7 @@ public interface IssueMapper  {
 
     @Select("select * from issue where user_id=#{id}")
     List<Issue> selectByUserId(Long id);
+
+    @Select("select * from issue")
+    List<Issue> selectAll();
 }

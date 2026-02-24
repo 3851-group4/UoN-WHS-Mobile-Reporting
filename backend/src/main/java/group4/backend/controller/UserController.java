@@ -12,6 +12,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/user")
 public class UserController {
@@ -27,57 +29,34 @@ public class UserController {
     // register function
     @PostMapping("/register")
     public R register(@RequestBody UserRegisterDto userRegisterDto){
-
-
-
        userService.register(userRegisterDto);
-
-
-
       // if register fails it will throw exception on service layer
         return R.ok("success");
-
-
     }
 
     // login function
     @PostMapping("/login")
     public R login(@RequestBody UserLoginDto userLoginDto){
-
-
-
     String token  =  userService.login(userLoginDto);
-
-
         return R.ok(token);
-
-
     }
 
     // logout
     @GetMapping("/logout")
     public R logout(HttpServletRequest httpServletRequest){
-
-
-
         // get token from header
         String token = httpServletRequest.getHeader("token");
 
         // delete token
         stringRedisTemplate.delete(token);
 
-
         return R.ok();
-
     }
 
 
-    // get user info
+    // get current user info
     @GetMapping("/get/user")
     public R getInfo(HttpServletRequest httpServletRequest){
-
-
-
         // get token from header
         String token = httpServletRequest.getHeader("token");
 
@@ -85,12 +64,14 @@ public class UserController {
         UserInfoDto user = userService.getInfo(token);
 
         return R.ok(user);
-
-
     }
 
-
-
-
+    // admin get all user
+    @AuthCheck(role = "admin")
+    @GetMapping("/admin/viewAll")
+    public R getAllUsers() {
+        List<UserInfoDto> users = userService.getAllUsers();
+        return R.ok(users);
+    }
 
 }

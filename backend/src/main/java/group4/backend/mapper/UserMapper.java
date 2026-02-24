@@ -6,6 +6,8 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Options;
 import org.apache.ibatis.annotations.Select;
 
+import java.util.List;
+
 @Mapper
 public interface UserMapper {
 
@@ -13,7 +15,9 @@ public interface UserMapper {
     @Options(useGeneratedKeys = true, keyProperty = "id")
     void insert(User user);
 
-
     @Select("select * from user where email = #{email}")
     User selectByEmail(String email);
+
+    @Select("select * from user")
+    List<User> selectAll();
 }

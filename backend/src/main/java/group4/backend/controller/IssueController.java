@@ -2,6 +2,7 @@ package group4.backend.controller;
 
 
 import com.google.gson.Gson;
+import group4.backend.aop.AuthCheck;
 import group4.backend.dto.IssueAddOrUpdateDto;
 import group4.backend.entity.Issue;
 import group4.backend.entity.User;
@@ -73,7 +74,7 @@ public class IssueController {
     }
 
 
-    // query current user issue
+    // query current user issues
     @GetMapping("/view")
     public R viewIssue(HttpServletRequest request) {
 
@@ -93,5 +94,12 @@ public class IssueController {
 
     }
 
+    // admin view all issues
+    @AuthCheck(role = "admin")
+    @GetMapping("/admin/viewAll")
+    public R viewAllIssues() {
+        List<IssueVo> issueVoList = issueService.getAllIssues();
+        return R.ok(issueVoList);
+    }
 
 }

@@ -15,8 +15,10 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -121,5 +123,19 @@ public class UserServiceImpl implements UserService {
 
 
         return userInfoDto;
+    }
+
+    // admin get all user
+    @Override
+    public List<UserInfoDto> getAllUsers() {
+        // select all user
+        List<User> users = userMapper.selectAll();
+
+        // convert user to useInfoDto
+        return users.stream().map(user -> {
+            UserInfoDto dto = new UserInfoDto();
+            BeanUtils.copyProperties(user, dto);
+            return dto;
+        }).collect(Collectors.toList());
     }
 }
