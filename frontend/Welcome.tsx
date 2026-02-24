@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Drawer,
@@ -13,6 +13,8 @@ import {
   Card,
   CardContent,
   Avatar,
+  Switch,
+  FormControlLabel,
 } from "@mui/material";
 import HomeIcon from "@mui/icons-material/Home";
 import AssignmentIcon from "@mui/icons-material/Assignment";
@@ -25,10 +27,13 @@ import ReportIcon from "@mui/icons-material/Report";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import SettingsIcon from "@mui/icons-material/Settings";
 import Report from "./Report";
+import Admin from "./Admin";
+import Manageissues from "./Manageissues";
+import Issuelist from "./List";
 
 const drawerWidth = 220;
 
-// Welcome page
+// Homepage
 const HomePage: React.FC = () => {
   return (
     <>
@@ -50,7 +55,7 @@ const HomePage: React.FC = () => {
       </Paper>
 
       <Grid container spacing={3}>
-        {/* four cards */}
+        {/* 4 cards */}
         <Grid item xs={12} md={6} lg={3}>
           <Card elevation={2} sx={{ borderRadius: 2, height: "100%" }}>
             <CardContent>
@@ -123,7 +128,6 @@ const HomePage: React.FC = () => {
           </Card>
         </Grid>
       </Grid>
-
     </>
   );
 };
@@ -136,33 +140,152 @@ const Welcome: React.FC<WelcomeProps> = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  // Test mode
+  const [testMode, setTestMode] = useState(true);
+  const [mockRole, setMockRole] = useState<'admin' | 'user'>('user');
+  const [userRole, setUserRole] = useState<'admin' | 'user'>('user');
+
+  // Get the status of user
+  useEffect(() => {
+    if (testMode) {
+      //Mock
+      setUserRole(mockRole);
+    } else {
+      //Actual
+      fetchUserRole();
+    }
+  }, [testMode, mockRole]);
+
+  // Actual
+  const fetchUserRole = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        navigate('/login');
+        return;
+      }
+
+      const response = await fetch('http://localhost:8080/api/user/get/user', {
+        method: 'GET',
+        headers: {
+          'token': token,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch user info');
+      }
+
+      const result = await response.json();
+      
+      if (result.code === 200 && result.data) {
+        setUserRole(result.data.role);
+      } else {
+        throw new Error('Invalid response');
+      }
+
+    } catch (err) {
+      console.error('Failed to fetch user role:', err);
+      navigate('/login');
+    }
+  };
+
   const handleLogout = () => {
-    localStorage.removeItem("satoken");
+    localStorage.removeItem("token");
     navigate("/login");
   };
 
-  const menuItems = [
-    { text: "Home page", icon: <HomeIcon />, path: "/welcome" },
-    { text: "Report", icon: <AssignmentIcon />, path: "/welcome/report" },
-    { text: "List", icon: <ListAltIcon />, path: "/welcome/issues" },
-    { text: "Profile", icon: <PersonIcon />, path: "/welcome/profile" },
-    { text: "Admin", icon: <AdminPanelSettingsIcon />, path: "/welcome/admin" },
-  ];
-  
+  // Different pages
+  const getMenuItems = () => {
+    if (userRole === 'admin') {
+      // Admin page
+      return [
+        { text: "Admin", icon: <AdminPanelSettingsIcon />, path: "/welcome/admin" },
+        { text: "Issues", icon: <ListAltIcon />, path: "/welcome/viewissues" },
+      ];
+    } else {
+      // User page
+      return [
+        { text: "Home page", icon: <HomeIcon />, path: "/welcome" },
+        { text: "Report", icon: <AssignmentIcon />, path: "/welcome/user/report" },
+        { text: "List", icon: <ListAltIcon />, path: "/welcome/user/list" },
+        { text: "Profile", icon: <PersonIcon />, path: "/welcome/profile" },
+      ];
+    }
+  };
+
+  const menuItems = getMenuItems();
+
   return (
     <Box sx={{ position: "relative", width: "100%", height: "100%" }}>
+      {/* Test board */}
+      {testMode && (
+        <Paper
+          sx={{
+            position: "fixed",
+            top: 80,
+            right: 30,
+            zIndex: 1400,
+            p: 2,
+            bgcolor: 'rgba(33, 150, 243, 0.95)',
+            color: '#fff',
+            minWidth: 200,
+          }}
+        >
+          <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
+            🧪 Test Mode
+          </Typography>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+            <Button
+              variant={mockRole === 'user' ? 'contained' : 'outlined'}
+              size="small"
+              onClick={() => setMockRole('user')}
+              sx={{
+                color: mockRole === 'user' ? '#2196f3' : '#fff',
+                bgcolor: mockRole === 'user' ? '#fff' : 'transparent',
+                borderColor: '#fff',
+                '&:hover': {
+                  bgcolor: mockRole === 'user' ? '#f5f5f5' : 'rgba(255,255,255,0.1)',
+                }
+              }}
+            >
+              Login as User
+            </Button>
+            <Button
+              variant={mockRole === 'admin' ? 'contained' : 'outlined'}
+              size="small"
+              onClick={() => setMockRole('admin')}
+              sx={{
+                color: mockRole === 'admin' ? '#2196f3' : '#fff',
+                bgcolor: mockRole === 'admin' ? '#fff' : 'transparent',
+                borderColor: '#fff',
+                '&:hover': {
+                  bgcolor: mockRole === 'admin' ? '#f5f5f5' : 'rgba(255,255,255,0.1)',
+                }
+              }}
+            >
+              Login as Admin
+            </Button>
+          </Box>
+          <Typography variant="caption" sx={{ mt: 1, display: 'block', opacity: 0.8 }}>
+            Current Role: {userRole}
+          </Typography>
+        </Paper>
+      )}
+
       {/* Logout button */}
-      <Box 
-        sx={{ 
-          position: "fixed", 
-          top: 30, 
-          right: 30, 
+      <Box
+        sx={{
+          position: "fixed",
+          top: 30,
+          right: 30,
           zIndex: 1400,
         }}
       >
-        <Button 
-          variant="contained" 
-          color="info" 
+        <Button
+          variant="contained"
+          color="info"
           size="large"
           onClick={handleLogout}
           sx={{
@@ -176,9 +299,9 @@ const Welcome: React.FC<WelcomeProps> = ({ children }) => {
           LOGOUT
         </Button>
       </Box>
-    
+
       <Box sx={{ display: "flex" }}>
-        {/* Left side menu */}
+        {/* Left menu */}
         <Drawer
           variant="permanent"
           sx={{
@@ -197,12 +320,22 @@ const Welcome: React.FC<WelcomeProps> = ({ children }) => {
             },
           }}
         >
+          {/* Role */}
+          <Box sx={{ p: 2, borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+            <Typography variant="subtitle2" sx={{ opacity: 0.7 }}>
+              Role
+            </Typography>
+            <Typography variant="h6" sx={{ fontWeight: 600, textTransform: 'uppercase' }}>
+              {userRole}
+            </Typography>
+          </Box>
+
           <List>
             {menuItems.map((item) => (
-              <ListItemButton 
+              <ListItemButton
                 key={item.path}
-                sx={{ 
-                  py: 1, 
+                sx={{
+                  py: 1,
                   mb: 1,
                   backgroundColor: location.pathname === item.path ? "rgba(255,255,255,0.1)" : "transparent",
                   "&:hover": {
@@ -220,22 +353,34 @@ const Welcome: React.FC<WelcomeProps> = ({ children }) => {
           </List>
         </Drawer>
 
-        {/* Main area - Use Routes navigate different pages */}
-        <Box 
+        {/* Main page */}
+        <Box
           component="main"
-          sx={{ 
-            flexGrow: 1, 
+          sx={{
+            flexGrow: 1,
             p: 3,
             width: `calc(100% - ${drawerWidth}px)`,
             minHeight: "100vh",
           }}
         >
           <Routes>
-            <Route index element={<HomePage />} />
-            <Route path="report" element={<Report />} />
-            <Route path="issues" element={<Typography variant="h4" sx={{ color: "#fff" }}>Issues Page</Typography>} />
-            <Route path="profile" element={<Typography variant="h4" sx={{ color: "#fff" }}>Profile Page</Typography>} />
-            <Route path="admin" element={<Typography variant="h4" sx={{ color: "#fff" }}>Admin Page</Typography>} />
+            {/* Different pages */}
+            {userRole === 'user' && (
+              <>
+                <Route index element={<HomePage />} />
+                <Route path="user/report" element={<Report />} />
+                <Route path="user/list" element={<Issuelist />} />
+                <Route path="profile" element={<Typography variant="h4" sx={{ color: "#fff" }}>Profile Page</Typography>} />
+              </>
+            )}
+            
+            {userRole === 'admin' && (
+              <>
+                <Route index element={<Admin />} />
+                <Route path="admin" element={<Admin />} />
+                <Route path="viewissues" element={<Manageissues />} />
+              </>
+            )}
           </Routes>
         </Box>
       </Box>
@@ -244,3 +389,5 @@ const Welcome: React.FC<WelcomeProps> = ({ children }) => {
 };
 
 export default Welcome;
+
+
