@@ -153,4 +153,23 @@ public class IssueServiceImpl implements IssueService {
 
         return issueVos;
     }
+
+    @Override
+    public void updateIssueStatus(Long issueId, String status) {
+        // valid if issue exists
+        Issue issue = issueMapper.selectById(issueId);
+        if (issue == null) {
+            throw new RuntimeException("issue not found");
+        }
+
+        // valid status
+        try {
+            IssueStatusEnum.fromStatus(status);
+        } catch (IllegalArgumentException e) {
+            throw new RuntimeException("invalid status");
+        }
+
+        // update status
+        issueMapper.updateStatus(issueId, status, LocalDateTime.now());
+    }
 }

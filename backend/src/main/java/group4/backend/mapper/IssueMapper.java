@@ -3,6 +3,7 @@ package group4.backend.mapper;
 import group4.backend.entity.Issue;
 import org.apache.ibatis.annotations.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Mapper
@@ -27,4 +28,7 @@ public interface IssueMapper  {
 
     @Select("select * from issue")
     List<Issue> selectAll();
+
+    @Update("update issue set status=#{status}, update_time=#{updateTime} where id=#{id}")
+    void updateStatus(@Param("id") Long id, @Param("status") String status, @Param("updateTime") LocalDateTime updateTime);
 }

@@ -15,4 +15,6 @@ public interface IssueService {
     List<IssueVo> getIssuesByUserId(Long id);
 
     List<IssueVo> getAllIssues();
+
+    void updateIssueStatus(Long issueId, String status);
 }

@@ -102,4 +102,12 @@ public class IssueController {
         return R.ok(issueVoList);
     }
 
+    // admin update issue status
+    @AuthCheck(role = "admin")
+    @PutMapping("/admin/updateStatus/{issueId}")
+    public R updateIssueStatus(@PathVariable Long issueId, @RequestParam String status) {
+        issueService.updateIssueStatus(issueId, status);
+        return R.ok();
+    }
+
 }
