@@ -1,18 +1,19 @@
 package group4.backend.controller;
 
-
 import com.google.gson.Gson;
 import group4.backend.aop.AuthCheck;
 import group4.backend.dto.IssueAddOrUpdateDto;
 import group4.backend.entity.Issue;
 import group4.backend.entity.User;
 import group4.backend.service.IssueService;
+import group4.backend.service.MinioService;
 import group4.backend.util.R;
 import group4.backend.vo.IssueVo;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -20,9 +21,11 @@ import java.util.List;
 @RequestMapping("/api/issue")
 public class IssueController {
 
-
     @Autowired
     IssueService issueService;
+
+    @Autowired
+    MinioService minioService;
 
     @Autowired
     StringRedisTemplate stringRedisTemplate;
@@ -32,8 +35,7 @@ public class IssueController {
 
     // add or update issue
     @PostMapping("/upsert")
-    public R addIssue(@RequestBody IssueAddOrUpdateDto issueAddOrUpdateDto, HttpServletRequest request){
-
+    public R addIssue(@RequestBody IssueAddOrUpdateDto issueAddOrUpdateDto, HttpServletRequest request) {
 
         // get token from header
         String token = request.getHeader("token");
@@ -43,8 +45,7 @@ public class IssueController {
         User user = gson.fromJson(info, User.class);
 
         // add or update issue
-        Long id =  issueService.upsertIssue(user.getId(),issueAddOrUpdateDto);
-
+        Long id = issueService.upsertIssue(user.getId(), issueAddOrUpdateDto);
 
         return R.ok(id);
 
@@ -52,8 +53,7 @@ public class IssueController {
 
     // delete issue
     @DeleteMapping("/delete/{issueId}")
-    public R deleteIssue(@PathVariable Long issueId, HttpServletRequest request){
-
+    public R deleteIssue(@PathVariable Long issueId, HttpServletRequest request) {
 
         // get token from header
         String token = request.getHeader("token");
@@ -62,23 +62,18 @@ public class IssueController {
         String info = stringRedisTemplate.opsForValue().get(token);
         User user = gson.fromJson(info, User.class);
 
-
         // delete issue
 
-        issueService.deleteIssue(user.getId(),issueId);
-
+        issueService.deleteIssue(user.getId(), issueId);
 
         return R.ok();
 
-
     }
-
 
     // query current user issues
     @GetMapping("/view")
     public R viewIssue(HttpServletRequest request) {
 
-
         // get token from header
         String token = request.getHeader("token");
 
@@ -86,9 +81,7 @@ public class IssueController {
         String info = stringRedisTemplate.opsForValue().get(token);
         User user = gson.fromJson(info, User.class);
 
-
-        List<IssueVo> issueVoList =  issueService.getIssuesByUserId(user.getId());
-
+        List<IssueVo> issueVoList = issueService.getIssuesByUserId(user.getId());
 
         return R.ok(issueVoList);
 
@@ -108,6 +101,19 @@ public class IssueController {
     public R updateIssueStatus(@PathVariable Long issueId, @RequestParam String status) {
         issueService.updateIssueStatus(issueId, status);
         return R.ok();
+    }
+
+    @PostMapping("/upload")
+    public R uploadPicture(@RequestParam("file") MultipartFile file) {
+        if (file.isEmpty()) {
+            throw new RuntimeException("file is empty");
+        }
+        String contentType = file.getContentType();
+        if (contentType == null || !contentType.startsWith("image/")) {
+            throw new RuntimeException("only image files are allowed");
+        }
+        String url = minioService.uploadFile(file);
+        return R.ok(url);
     }
 
 }

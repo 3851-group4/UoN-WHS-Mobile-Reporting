@@ -8,11 +8,10 @@ import group4.backend.mapper.IssueMapper;
 import group4.backend.mapper.IssuePictureMapper;
 import group4.backend.service.IssueService;
 import group4.backend.vo.IssueVo;
-import org.checkerframework.checker.units.qual.A;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -27,95 +26,93 @@ public class IssueServiceImpl implements IssueService {
     @Autowired
     IssuePictureMapper issuePictureMapper;
 
-
-
-
-    // add or update issue
+    @Transactional
     @Override
     public Long upsertIssue(Long id, IssueAddOrUpdateDto issueAddOrUpdateDto) {
 
+        // convert to issue entity
         Issue issue = new Issue();
-        BeanUtils.copyProperties(issueAddOrUpdateDto,issue);
+        BeanUtils.copyProperties(issueAddOrUpdateDto, issue);
         issue.setUserId(id);
 
-
-
-        // add issue
-        if(issue.getId()==null)
-        {
-
+        if (issue.getId() == null) { // add a new issue
             issue.setStatus(IssueStatusEnum.PENDING.getStatus());
             issue.setCreateTime(LocalDateTime.now());
             issue.setUpdateTime(LocalDateTime.now());
-
             issueMapper.insert(issue);
-        }
-        else {
-            // update issue
-
-            Issue issue1 =  issueMapper.selectById(issue.getId());
-            if(issue1==null) {
+        } else { // update issue
+            Issue issue1 = issueMapper.selectById(issue.getId());
+            if (issue1 == null) {
                 throw new RuntimeException("issue not found");
             }
-            if(!issue1.getStatus().equals(IssueStatusEnum.PENDING.getStatus())){
+            // only pending status issue can be updated
+            if (!issue1.getStatus().equals(IssueStatusEnum.PENDING.getStatus())) {
                 throw new RuntimeException("issue not in pending status");
             }
             issue.setUpdateTime(LocalDateTime.now());
-
             issueMapper.update(issue);
+
+            // delete old picture
+            issuePictureMapper.deleteByIssueId(issue.getId());
         }
 
+        // get picture urls
+        List<String> urls = issueAddOrUpdateDto.getUrls();
+        if (urls != null && !urls.isEmpty()) {
+            for (String url : urls) {
+
+                // insert to issue picture table
+                IssuePicture issuePicture = new IssuePicture();
+                issuePicture.setIssueId(issue.getId());
+                issuePicture.setUrl(url);
+                issuePicture.setCreateTime(LocalDateTime.now());
+                issuePicture.setUpdateTime(LocalDateTime.now());
+                issuePictureMapper.insert(issuePicture);
+            }
+        }
 
         return issue.getId();
-
 
     }
 
     @Override
     public void deleteIssue(Long id, Long issueId) {
 
-
         // get issue by issueId
         Issue issue = issueMapper.selectById(issueId);
 
         // valid if issue can be deleted
-        if(issue==null) {
+        if (issue == null) {
             throw new RuntimeException("issue not found");
         }
 
-        if(!issue.getUserId().equals(id)){
+        if (!issue.getUserId().equals(id)) {
 
             throw new RuntimeException("no permission");
         }
 
-        if(!issue.getStatus().equals(IssueStatusEnum.PENDING.getStatus())){
+        if (!issue.getStatus().equals(IssueStatusEnum.PENDING.getStatus())) {
             throw new RuntimeException("issue not in pending status");
         }
 
         // delete issue
         issueMapper.delete(issueId);
 
-
-
     }
 
     @Override
     public List<IssueVo> getIssuesByUserId(Long id) {
 
-
-        List<Issue>issues = issueMapper.selectByUserId(id);
+        List<Issue> issues = issueMapper.selectByUserId(id);
 
         // get issue pictures by issue id
 
         List<IssueVo> issueVos = issues.stream().map((issue) -> {
 
-
             List<IssuePicture> issuePictures = issuePictureMapper.selectByIssueId(issue.getId());
-
 
             // get issue pictures url
             List<String> urls = issuePictures.stream().map(IssuePicture::getUrl).toList();
-
 
             IssueVo issueVo = new IssueVo();
 
@@ -125,11 +122,7 @@ public class IssueServiceImpl implements IssueService {
 
             return issueVo;
 
-
         }).collect(Collectors.toList());
-
-
-
 
         return issueVos;
     }
