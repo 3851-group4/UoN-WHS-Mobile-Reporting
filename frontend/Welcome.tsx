@@ -30,6 +30,7 @@ import Report from "./Report";
 import Admin from "./Admin";
 import Manageissues from "./Manageissues";
 import Issuelist from "./List";
+import Profile from "./Profile";
 
 const drawerWidth = 220;
 
@@ -370,7 +371,7 @@ const Welcome: React.FC<WelcomeProps> = ({ children }) => {
                 <Route index element={<HomePage />} />
                 <Route path="user/report" element={<Report />} />
                 <Route path="user/list" element={<Issuelist />} />
-                <Route path="profile" element={<Typography variant="h4" sx={{ color: "#fff" }}>Profile Page</Typography>} />
+                <Route path="profile" element={<Profile />} />
               </>
             )}
             
@@ -389,5 +390,3 @@ const Welcome: React.FC<WelcomeProps> = ({ children }) => {
 };
 
 export default Welcome;
-
-
