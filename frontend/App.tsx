@@ -4,7 +4,6 @@ import { Container, Typography, Box, Paper } from "@mui/material";
 import Login from "./Login";
 import Register from "./Register";
 import Welcome from "./Welcome";
-import Admin from "./Admin";
 
 const App: FC = () => {
     const location = useLocation();

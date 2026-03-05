@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Typography,
@@ -26,6 +26,7 @@ import {
   FormControl,
   InputLabel,
   Avatar,
+  CircularProgress,
 } from '@mui/material';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import CloseIcon from '@mui/icons-material/Close';
@@ -33,156 +34,143 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
 import EditIcon from '@mui/icons-material/Edit';
 
-// definition of API 
-interface Report {
+const API_BASE = 'http://localhost:8000';
+
+interface IssueVo {
   id: number;
+  userId: number;
   title: string;
-  category: string;
-  location: string;
+  brief: string;
   description: string;
-  status: 'Pending' | 'In Progress' | 'Resolved';
-  submittedDate: string;
-  submittedTime: string;
-  submittedBy: string;
-  images: string[];
+  location: string;
+  status: string;
+  witnessInfo: string;
+  happenTime: string;
+  urls: string[];
 }
 
-const ManageIssues: React.FC = () => {
-  // Sample data
-  const [reports, setReports] = useState<Report[]>([
-    {
-      id: 1,
-      title: 'Broken Window in Building A',
-      category: 'Facility',
-      location: 'Building A, Room 301',
-      description: 'The window on the third floor is cracked and poses a safety hazard. It needs immediate attention as glass shards are falling.',
-      status: 'Pending',
-      submittedDate: '2024-02-15',
-      submittedTime: '14:30',
-      submittedBy: 'John Smith',
-      images: [
-        'https://via.placeholder.com/300x200?text=Broken+Window+1',
-        'https://via.placeholder.com/300x200?text=Broken+Window+2',
-      ],
-    },
-    {
-      id: 2,
-      title: 'Slippery Floor in Cafeteria',
-      category: 'Safety',
-      location: 'Main Cafeteria',
-      description: 'Water leak causing slippery floor near the beverage station. Multiple students have nearly slipped.',
-      status: 'Resolved',
-      submittedDate: '2024-02-16',
-      submittedTime: '09:15',
-      submittedBy: 'Sarah Johnson',
-      images: [
-        'https://via.placeholder.com/300x200?text=Wet+Floor',
-      ],
-    },
-    {
-      id: 3,
-      title: 'Faulty Elevator in Library',
-      category: 'Equipment',
-      location: 'Central Library, 2nd Floor',
-      description: 'The elevator keeps getting stuck between floors. This has happened three times this week.',
-      status: 'In Progress',
-      submittedDate: '2024-02-14',
-      submittedTime: '11:20',
-      submittedBy: 'Mike Chen',
-      images: [],
-    },
-    {
-      id: 4,
-      title: 'Broken Lock on Lab Door',
-      category: 'Security',
-      location: 'Science Building, Lab 205',
-      description: 'The door lock is not working properly, making it easy for unauthorized access.',
-      status: 'Resolved',
-      submittedDate: '2024-02-10',
-      submittedTime: '16:45',
-      submittedBy: 'Emily Davis',
-      images: [
-        'https://via.placeholder.com/300x200?text=Broken+Lock',
-      ],
-    },
-  ]);
+type BackendStatus = 'pending' | 'processing' | 'completed';
 
-  // Status
+const STATUS_LABELS: Record<string, string> = {
+  pending: 'Pending',
+  processing: 'In Progress',
+  completed: 'Completed',
+};
+
+const statusColor = (status: string): 'warning' | 'primary' | 'success' | 'default' => {
+  switch (status) {
+    case 'pending': return 'warning';
+    case 'processing': return 'primary';
+    case 'completed': return 'success';
+    default: return 'default';
+  }
+};
+
+const formatDateTime = (dt: string | null) => {
+  if (!dt) return '—';
+  const d = new Date(dt);
+  return `${d.toLocaleDateString()} ${d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+};
+
+const ManageIssues: React.FC = () => {
+  const [issues, setIssues] = useState<IssueVo[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
   const [statusDialogOpen, setStatusDialogOpen] = useState(false);
-  const [selectedReport, setSelectedReport] = useState<Report | null>(null);
-  const [newStatus, setNewStatus] = useState<Report['status']>('Pending');
+  const [selectedIssue, setSelectedIssue] = useState<IssueVo | null>(null);
+  const [newStatus, setNewStatus] = useState<BackendStatus>('pending');
+  const [statusSubmitting, setStatusSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
-
-  //  preview image
   const [previewImage, setPreviewImage] = useState<string | null>(null);
-
-  //  filter
   const [statusFilter, setStatusFilter] = useState<string>('All');
 
-  //  view report
-  const handleViewReport = (report: Report) => {
-    setSelectedReport(report);
+  const getToken = () => localStorage.getItem('token') || '';
+
+  const fetchIssues = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const res = await fetch(`${API_BASE}/api/issue/admin/viewAll`, {
+        headers: { 'token': getToken() },
+      });
+      const result = await res.json();
+      if (result.code === 200) {
+        setIssues(result.data || []);
+      } else {
+        setError(result.msg || 'Failed to load issues.');
+      }
+    } catch (e) {
+      setError('Failed to connect to the server.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchIssues();
+  }, []);
+
+  const handleViewReport = (issue: IssueVo) => {
+    setSelectedIssue(issue);
     setViewDialogOpen(true);
   };
 
-  //update status
-  const handleUpdateStatus = (report: Report) => {
-    setSelectedReport(report);
-    setNewStatus(report.status);
+  const handleUpdateStatusOpen = (issue: IssueVo) => {
+    setSelectedIssue(issue);
+    setNewStatus(issue.status as BackendStatus);
     setStatusDialogOpen(true);
   };
 
-  //  confirm
-  const confirmUpdateStatus = () => {
-    if (selectedReport) {
-      setReports(reports.map(r => 
-        r.id === selectedReport.id ? { ...r, status: newStatus } : r
-      ));
-      
-      setStatusDialogOpen(false);
-      setSuccessMessage(`Report #${selectedReport.id} status updated to "${newStatus}"!`);
-      setTimeout(() => setSuccessMessage(''), 3000);
+  const confirmUpdateStatus = async () => {
+    if (!selectedIssue) return;
+    setStatusSubmitting(true);
+    try {
+      const res = await fetch(
+        `${API_BASE}/api/issue/admin/updateStatus/${selectedIssue.id}?status=${newStatus}`,
+        {
+          method: 'PUT',
+          headers: { 'token': getToken() },
+        }
+      );
+      const result = await res.json();
+      if (result.code === 200) {
+        setStatusDialogOpen(false);
+        setSuccessMessage(`Issue #${selectedIssue.id} status updated to "${STATUS_LABELS[newStatus]}"!`);
+        setTimeout(() => setSuccessMessage(''), 3000);
+        fetchIssues();
+      } else {
+        alert(result.msg || 'Failed to update status.');
+      }
+    } catch (e) {
+      alert('An error occurred. Please try again.');
+    } finally {
+      setStatusSubmitting(false);
     }
   };
 
-  // color
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'Pending': return 'warning';
-      case 'In Progress': return 'primary';
-      case 'Resolved': return 'success';
-      default: return 'default';
-    }
-  };
+  const filteredIssues = statusFilter === 'All'
+    ? issues
+    : issues.filter((i) => i.status === statusFilter);
 
-  //  status icon
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'Pending': return <HourglassEmptyIcon fontSize="small" />;
-      case 'Acknowledged': return <CheckCircleIcon fontSize="small" />;
-      case 'In Progress': return <EditIcon fontSize="small" />;
-      case 'Resolved': return <CheckCircleIcon fontSize="small" />;
-      default: return null;
-    }
-  };
-
-  // filter of report
-  const filteredReports = statusFilter === 'All' 
-    ? reports 
-    : reports.filter(r => r.status === statusFilter);
-
-  //  data
   const stats = {
-    total: reports.length,
-    pending: reports.filter(r => r.status === 'Pending').length,
-    inProgress: reports.filter(r => r.status === 'In Progress').length,
-    resolved: reports.filter(r => r.status === 'Resolved').length,
+    total: issues.length,
+    pending: issues.filter((i) => i.status === 'pending').length,
+    processing: issues.filter((i) => i.status === 'processing').length,
+    completed: issues.filter((i) => i.status === 'completed').length,
   };
+
+  if (loading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 8 }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
 
   return (
     <Box sx={{ width: '100%' }}>
-      {/* title */}
       <Box sx={{ mb: 3 }}>
         <Typography variant="h4" sx={{ fontWeight: 600, color: '#000', mb: 1 }}>
           Manage Issues
@@ -192,83 +180,68 @@ const ManageIssues: React.FC = () => {
         </Typography>
       </Box>
 
-      {/* Successful message */}
+      {error && (
+        <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError('')}>
+          {error}
+        </Alert>
+      )}
+
       {successMessage && (
         <Alert severity="success" sx={{ mb: 2 }} onClose={() => setSuccessMessage('')}>
           {successMessage}
         </Alert>
       )}
 
-      {/* 统计卡片 Total cards*/}
+      {/* Stats Cards */}
       <Grid container spacing={2} sx={{ mb: 3 }}>
-        <Grid item xs={12} sm={6} md={2.4}>
+        <Grid item xs={12} sm={6} md={3}>
           <Paper sx={{ p: 2, textAlign: 'center', bgcolor: '#f5f5f5' }}>
-            <Typography variant="h4" sx={{ fontWeight: 600, color: '#1976d2' }}>
-              {stats.total}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Total Reports
-            </Typography>
+            <Typography variant="h4" sx={{ fontWeight: 600, color: '#1976d2' }}>{stats.total}</Typography>
+            <Typography variant="body2" color="text.secondary">Total Reports</Typography>
           </Paper>
         </Grid>
-        <Grid item xs={12} sm={6} md={2.4}>
+        <Grid item xs={12} sm={6} md={3}>
           <Paper sx={{ p: 2, textAlign: 'center', bgcolor: '#fff3e0' }}>
-            <Typography variant="h4" sx={{ fontWeight: 600, color: '#ed6c02' }}>
-              {stats.pending}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Pending
-            </Typography>
+            <Typography variant="h4" sx={{ fontWeight: 600, color: '#ed6c02' }}>{stats.pending}</Typography>
+            <Typography variant="body2" color="text.secondary">Pending</Typography>
           </Paper>
         </Grid>
-        <Grid item xs={12} sm={6} md={2.4}>
+        <Grid item xs={12} sm={6} md={3}>
           <Paper sx={{ p: 2, textAlign: 'center', bgcolor: '#e8eaf6' }}>
-            <Typography variant="h4" sx={{ fontWeight: 600, color: '#3f51b5' }}>
-              {stats.inProgress}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              In Progress
-            </Typography>
+            <Typography variant="h4" sx={{ fontWeight: 600, color: '#3f51b5' }}>{stats.processing}</Typography>
+            <Typography variant="body2" color="text.secondary">In Progress</Typography>
           </Paper>
         </Grid>
-        <Grid item xs={12} sm={6} md={2.4}>
+        <Grid item xs={12} sm={6} md={3}>
           <Paper sx={{ p: 2, textAlign: 'center', bgcolor: '#e8f5e9' }}>
-            <Typography variant="h4" sx={{ fontWeight: 600, color: '#2e7d32' }}>
-              {stats.resolved}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Resolved
-            </Typography>
+            <Typography variant="h4" sx={{ fontWeight: 600, color: '#2e7d32' }}>{stats.completed}</Typography>
+            <Typography variant="body2" color="text.secondary">Completed</Typography>
           </Paper>
         </Grid>
       </Grid>
 
       {/* Filter */}
-<Box sx={{ mb: 2, display: 'flex', justifyContent: 'flex-end' }}>
-  <Select
-    value={statusFilter}
-    onChange={(e) => setStatusFilter(e.target.value)}
-    size="small"
-    sx={{
-      minWidth: 200,
-      bgcolor: '#fff',
-    }}
-  >
-    <MenuItem value="All">All Reports</MenuItem>
-    <MenuItem value="Pending">Pending</MenuItem>
-    <MenuItem value="In Progress">In Progress</MenuItem>
-    <MenuItem value="Resolved">Resolved</MenuItem>
-  </Select>
-</Box>
+      <Box sx={{ mb: 2, display: 'flex', justifyContent: 'flex-end' }}>
+        <Select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          size="small"
+          sx={{ minWidth: 200, bgcolor: '#fff' }}
+        >
+          <MenuItem value="All">All Reports</MenuItem>
+          <MenuItem value="pending">Pending</MenuItem>
+          <MenuItem value="processing">In Progress</MenuItem>
+          <MenuItem value="completed">Completed</MenuItem>
+        </Select>
+      </Box>
 
-      {/* The list of report*/}
+      {/* Issues Table */}
       <TableContainer component={Paper} elevation={3}>
         <Table>
           <TableHead>
             <TableRow sx={{ bgcolor: '#f5f5f5' }}>
               <TableCell sx={{ fontWeight: 600 }}>ID</TableCell>
               <TableCell sx={{ fontWeight: 600 }}>Title</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>Category</TableCell>
               <TableCell sx={{ fontWeight: 600 }}>Location</TableCell>
               <TableCell sx={{ fontWeight: 600 }}>Submitted By</TableCell>
               <TableCell sx={{ fontWeight: 600 }}>Status</TableCell>
@@ -278,83 +251,58 @@ const ManageIssues: React.FC = () => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {filteredReports.length === 0 ? (
+            {filteredIssues.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={9} align="center" sx={{ py: 4 }}>
-                  <Typography variant="body1" color="text.secondary">
-                    No reports found
-                  </Typography>
+                <TableCell colSpan={8} align="center" sx={{ py: 4 }}>
+                  <Typography variant="body1" color="text.secondary">No reports found</Typography>
                 </TableCell>
               </TableRow>
             ) : (
-              filteredReports.map((report) => (
-                <TableRow 
-                  key={report.id}
-                  sx={{ 
-                    '&:hover': { bgcolor: '#f9f9f9' },
-                    opacity: report.status === 'Resolved' ? 0.8 : 1,
-                  }}
-                >
+              filteredIssues.map((issue) => (
+                <TableRow key={issue.id} sx={{ '&:hover': { bgcolor: '#f9f9f9' } }}>
                   <TableCell>
-                    <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                      #{report.id}
-                    </Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 600 }}>#{issue.id}</Typography>
                   </TableCell>
                   <TableCell sx={{ maxWidth: 200 }}>
-                    <Typography variant="body2" noWrap>
-                      {report.title}
-                    </Typography>
+                    <Typography variant="body2" noWrap>{issue.title}</Typography>
                   </TableCell>
-                  <TableCell>{report.category}</TableCell>
                   <TableCell sx={{ maxWidth: 150 }}>
-                    <Typography variant="body2" noWrap>
-                      {report.location}
-                    </Typography>
+                    <Typography variant="body2" noWrap>{issue.location}</Typography>
                   </TableCell>
                   <TableCell>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <Avatar sx={{ width: 32, height: 32, bgcolor: '#1976d2', fontSize: '0.875rem' }}>
-                        {report.submittedBy.charAt(0)}
+                        {String(issue.userId)}
                       </Avatar>
-                      <Typography variant="body2">{report.submittedBy}</Typography>
+                      <Typography variant="body2">User #{issue.userId}</Typography>
                     </Box>
                   </TableCell>
                   <TableCell>
-                    <Chip 
-                      label={report.status} 
-                      color={getStatusColor(report.status) as any}
+                    <Chip
+                      label={STATUS_LABELS[issue.status] ?? issue.status}
+                      color={statusColor(issue.status)}
                       size="small"
                     />
                   </TableCell>
                   <TableCell>
-                    <Typography variant="body2">{report.submittedDate}</Typography>
-                    <Typography variant="caption" color="text.secondary">{report.submittedTime}</Typography>
+                    <Typography variant="body2">{formatDateTime(issue.happenTime)}</Typography>
                   </TableCell>
                   <TableCell>
-                    <Chip 
-                      label={`${report.images.length} photo${report.images.length !== 1 ? 's' : ''}`}
+                    <Chip
+                      label={`${(issue.urls || []).length} photo${(issue.urls || []).length !== 1 ? 's' : ''}`}
                       size="small"
-                      color={report.images.length > 0 ? 'primary' : 'default'}
+                      color={(issue.urls || []).length > 0 ? 'primary' : 'default'}
                       variant="outlined"
                     />
                   </TableCell>
                   <TableCell align="center">
                     <Tooltip title="View Details">
-                      <IconButton 
-                        size="small" 
-                        color="primary"
-                        onClick={() => handleViewReport(report)}
-                      >
+                      <IconButton size="small" color="primary" onClick={() => handleViewReport(issue)}>
                         <VisibilityIcon fontSize="small" />
                       </IconButton>
                     </Tooltip>
-                    
                     <Tooltip title="Update Status">
-                      <IconButton 
-                        size="small" 
-                        color="success"
-                        onClick={() => handleUpdateStatus(report)}
-                      >
+                      <IconButton size="small" color="success" onClick={() => handleUpdateStatusOpen(issue)}>
                         <EditIcon fontSize="small" />
                       </IconButton>
                     </Tooltip>
@@ -366,13 +314,8 @@ const ManageIssues: React.FC = () => {
         </Table>
       </TableContainer>
 
-      {/* View the details */}
-      <Dialog 
-        open={viewDialogOpen} 
-        onClose={() => setViewDialogOpen(false)}
-        maxWidth="md"
-        fullWidth
-      >
+      {/* View Details Dialog */}
+      <Dialog open={viewDialogOpen} onClose={() => setViewDialogOpen(false)} maxWidth="md" fullWidth>
         <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Typography variant="h6">Report Details</Typography>
           <IconButton onClick={() => setViewDialogOpen(false)} size="small">
@@ -380,88 +323,74 @@ const ManageIssues: React.FC = () => {
           </IconButton>
         </DialogTitle>
         <DialogContent dividers>
-          {selectedReport && (
+          {selectedIssue && (
             <Grid container spacing={2}>
               <Grid item xs={12}>
                 <Typography variant="subtitle2" color="text.secondary">Report ID</Typography>
-                <Typography variant="body1" sx={{ fontWeight: 500 }}>#{selectedReport.id}</Typography>
+                <Typography variant="body1" sx={{ fontWeight: 500 }}>#{selectedIssue.id}</Typography>
               </Grid>
-
               <Grid item xs={12}>
                 <Typography variant="subtitle2" color="text.secondary">Title</Typography>
-                <Typography variant="h6">{selectedReport.title}</Typography>
+                <Typography variant="h6">{selectedIssue.title}</Typography>
               </Grid>
-
-              <Grid item xs={6}>
-                <Typography variant="subtitle2" color="text.secondary">Category</Typography>
-                <Typography variant="body1">{selectedReport.category}</Typography>
-              </Grid>
-
               <Grid item xs={6}>
                 <Typography variant="subtitle2" color="text.secondary">Location</Typography>
-                <Typography variant="body1">{selectedReport.location}</Typography>
+                <Typography variant="body1">{selectedIssue.location}</Typography>
               </Grid>
-
               <Grid item xs={6}>
                 <Typography variant="subtitle2" color="text.secondary">Status</Typography>
-                <Chip 
-                  label={selectedReport.status} 
-                  color={getStatusColor(selectedReport.status) as any}
+                <Chip
+                  label={STATUS_LABELS[selectedIssue.status] ?? selectedIssue.status}
+                  color={statusColor(selectedIssue.status)}
                   size="small"
                 />
               </Grid>
-
               <Grid item xs={6}>
                 <Typography variant="subtitle2" color="text.secondary">Submitted By</Typography>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
                   <Avatar sx={{ width: 32, height: 32, bgcolor: '#1976d2' }}>
-                    {selectedReport.submittedBy.charAt(0)}
+                    {String(selectedIssue.userId)}
                   </Avatar>
-                  <Typography variant="body1">{selectedReport.submittedBy}</Typography>
+                  <Typography variant="body1">User #{selectedIssue.userId}</Typography>
                 </Box>
               </Grid>
-
               <Grid item xs={6}>
-                <Typography variant="subtitle2" color="text.secondary">Submitted Date</Typography>
-                <Typography variant="body1">{selectedReport.submittedDate}</Typography>
+                <Typography variant="subtitle2" color="text.secondary">Date & Time</Typography>
+                <Typography variant="body1">{formatDateTime(selectedIssue.happenTime)}</Typography>
               </Grid>
-
-              <Grid item xs={6}>
-                <Typography variant="subtitle2" color="text.secondary">Submitted Time</Typography>
-                <Typography variant="body1">{selectedReport.submittedTime}</Typography>
-              </Grid>
-
+              {selectedIssue.brief && (
+                <Grid item xs={12}>
+                  <Typography variant="subtitle2" color="text.secondary">Brief</Typography>
+                  <Typography variant="body1">{selectedIssue.brief}</Typography>
+                </Grid>
+              )}
               <Grid item xs={12}>
                 <Typography variant="subtitle2" color="text.secondary">Description</Typography>
                 <Paper sx={{ p: 2, mt: 1, bgcolor: '#f5f5f5' }}>
                   <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap' }}>
-                    {selectedReport.description}
+                    {selectedIssue.description}
                   </Typography>
                 </Paper>
               </Grid>
-
-              {/* 图片展示 display pictures */}
-              {selectedReport.images.length > 0 && (
+              {selectedIssue.witnessInfo && (
+                <Grid item xs={12}>
+                  <Typography variant="subtitle2" color="text.secondary">Witness Info</Typography>
+                  <Typography variant="body1">{selectedIssue.witnessInfo}</Typography>
+                </Grid>
+              )}
+              {(selectedIssue.urls || []).length > 0 && (
                 <Grid item xs={12}>
                   <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
-                    Attached Images ({selectedReport.images.length})
+                    Attached Images ({selectedIssue.urls.length})
                   </Typography>
                   <ImageList cols={3} gap={8}>
-                    {selectedReport.images.map((image, index) => (
-                      <ImageListItem 
-                        key={index}
-                        sx={{ 
-                          cursor: 'pointer',
-                          '&:hover': { opacity: 0.8 }
-                        }}
-                        onClick={() => setPreviewImage(image)}
+                    {selectedIssue.urls.map((url, idx) => (
+                      <ImageListItem
+                        key={idx}
+                        sx={{ cursor: 'pointer', '&:hover': { opacity: 0.8 } }}
+                        onClick={() => setPreviewImage(url)}
                       >
-                        <img
-                          src={image}
-                          alt={`Report image ${index + 1}`}
-                          loading="lazy"
-                          style={{ height: 150, objectFit: 'cover' }}
-                        />
+                        <img src={url} alt={`Image ${idx + 1}`} loading="lazy" style={{ height: 150, objectFit: 'cover' }} />
                       </ImageListItem>
                     ))}
                   </ImageList>
@@ -471,12 +400,10 @@ const ManageIssues: React.FC = () => {
           )}
         </DialogContent>
         <DialogActions>
-          <Button 
+          <Button
             onClick={() => {
               setViewDialogOpen(false);
-              if (selectedReport) {
-                handleUpdateStatus(selectedReport);
-              }
+              if (selectedIssue) handleUpdateStatusOpen(selectedIssue);
             }}
             variant="contained"
             color="primary"
@@ -487,24 +414,19 @@ const ManageIssues: React.FC = () => {
         </DialogActions>
       </Dialog>
 
-      {/* Update status */}
-      <Dialog 
-        open={statusDialogOpen} 
-        onClose={() => setStatusDialogOpen(false)}
-        maxWidth="sm"
-        fullWidth
-      >
+      {/* Update Status Dialog */}
+      <Dialog open={statusDialogOpen} onClose={() => setStatusDialogOpen(false)} maxWidth="sm" fullWidth>
         <DialogTitle>Update Report Status</DialogTitle>
         <DialogContent>
-          {selectedReport && (
+          {selectedIssue && (
             <Box sx={{ mt: 2 }}>
               <Paper sx={{ p: 2, mb: 3, bgcolor: '#f5f5f5' }}>
                 <Typography variant="subtitle2" color="text.secondary">Report:</Typography>
                 <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                  #{selectedReport.id} - {selectedReport.title}
+                  #{selectedIssue.id} — {selectedIssue.title}
                 </Typography>
                 <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                  Submitted by: {selectedReport.submittedBy}
+                  Submitted by: User #{selectedIssue.userId}
                 </Typography>
               </Paper>
 
@@ -513,62 +435,50 @@ const ManageIssues: React.FC = () => {
                 <Select
                   value={newStatus}
                   label="New Status"
-                  onChange={(e) => setNewStatus(e.target.value as Report['status'])}
+                  onChange={(e) => setNewStatus(e.target.value as BackendStatus)}
                 >
-                  <MenuItem value="Pending">
+                  <MenuItem value="pending">
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <HourglassEmptyIcon fontSize="small" />
                       Pending
                     </Box>
                   </MenuItem>
-
-                  <MenuItem value="In Progress">
+                  <MenuItem value="processing">
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <EditIcon fontSize="small" />
                       In Progress
                     </Box>
                   </MenuItem>
-                  <MenuItem value="Resolved">
+                  <MenuItem value="completed">
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <CheckCircleIcon fontSize="small" />
-                      Resolved
+                      Completed
                     </Box>
                   </MenuItem>
                 </Select>
               </FormControl>
 
               <Alert severity="info" sx={{ mt: 2 }}>
-                <Typography variant="body2">
-                  <strong>Status Guide:</strong>
-                </Typography>
+                <Typography variant="body2"><strong>Status Guide:</strong></Typography>
                 <Typography variant="caption" component="div">
-                  • <strong>Pending:</strong> Report received, awaiting review<br/>
-                  • <strong>In Progress:</strong> Currently being worked on<br/>
-                  • <strong>Resolved:</strong> Issue has been fixed/completed
+                  • <strong>Pending:</strong> Report received, awaiting review<br />
+                  • <strong>In Progress:</strong> Currently being worked on<br />
+                  • <strong>Completed:</strong> Issue has been fixed/resolved
                 </Typography>
               </Alert>
             </Box>
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setStatusDialogOpen(false)}>Cancel</Button>
-          <Button 
-            onClick={confirmUpdateStatus} 
-            variant="contained" 
-            color="primary"
-          >
-            Update Status
+          <Button onClick={() => setStatusDialogOpen(false)} disabled={statusSubmitting}>Cancel</Button>
+          <Button onClick={confirmUpdateStatus} variant="contained" color="primary" disabled={statusSubmitting}>
+            {statusSubmitting ? 'Updating...' : 'Update Status'}
           </Button>
         </DialogActions>
       </Dialog>
 
-      {/*  preview image  */}
-      <Dialog
-        open={!!previewImage}
-        onClose={() => setPreviewImage(null)}
-        maxWidth="md"
-        fullWidth
-      >
+      {/* Image Preview Dialog */}
+      <Dialog open={!!previewImage} onClose={() => setPreviewImage(null)} maxWidth="md" fullWidth>
         <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Typography variant="h6">Image Preview</Typography>
           <IconButton onClick={() => setPreviewImage(null)} size="small">
@@ -578,11 +488,7 @@ const ManageIssues: React.FC = () => {
         <DialogContent>
           {previewImage && (
             <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-              <img
-                src={previewImage}
-                alt="Preview"
-                style={{ maxWidth: '100%', maxHeight: '70vh', objectFit: 'contain' }}
-              />
+              <img src={previewImage} alt="Preview" style={{ maxWidth: '100%', maxHeight: '70vh', objectFit: 'contain' }} />
             </Box>
           )}
         </DialogContent>
@@ -591,6 +497,4 @@ const ManageIssues: React.FC = () => {
   );
 };
 
-
 export default ManageIssues;
-

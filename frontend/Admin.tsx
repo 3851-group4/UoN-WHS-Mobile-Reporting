@@ -1,232 +1,222 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  Typography, 
-  Box, 
-  CircularProgress, 
+import {
+  Typography,
+  Box,
+  CircularProgress,
   Alert,
-  Button,
   Paper,
-  Switch,
-  FormControlLabel
+  Grid,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Avatar,
+  Chip,
 } from '@mui/material';
+import PeopleIcon from '@mui/icons-material/People';
+import ReportIcon from '@mui/icons-material/Report';
+import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
+import PersonIcon from '@mui/icons-material/Person';
+
+const API_BASE = 'http://localhost:8000';
+
+interface UserInfoDto {
+  id: number;
+  email: string;
+  name: string;
+  role: string;
+}
+
+interface IssueVo {
+  id: number;
+  status: string;
+}
 
 const AdminPage: React.FC = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [userInfo, setUserInfo] = useState<any>(null);
+  const [users, setUsers] = useState<UserInfoDto[]>([]);
+  const [issues, setIssues] = useState<IssueVo[]>([]);
 
-  // Switch
-  const [testMode, setTestMode] = useState(true);
-  const [mockRole, setMockRole] = useState<'admin' | 'user'>('admin');
+  const getToken = () => localStorage.getItem('token') || '';
 
   useEffect(() => {
-    if (testMode) {
-      //   Mock
-      checkAdminPermissionMock();
-    } else {
-      //   Real version
-      checkAdminPermission();
-    }
-  }, [mockRole, testMode]);
+    loadDashboardData();
+  }, []);
 
-  //  Mock version -  Use for test
-  const checkAdminPermissionMock = async () => {
+  const loadDashboardData = async () => {
     setLoading(true);
     setError('');
+    const token = getToken();
 
-    //  Mock ping
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
-    // Mock data
-    const mockUsers = {
-      admin: {
-        username: 'admin_user',
-        role: 'admin',
-        email: 'admin@example.com'
-      },
-      user: {
-        username: 'normal_user',
-        role: 'user',
-        email: 'user@example.com'
-      }
-    };
-
-    const mockData = mockUsers[mockRole];
-
-   
-    const result = {
-      code: 200,
-      data: mockData
-    };
-
-    if (result.code === 200 && result.data) {
-      setUserInfo(result.data);
-      
-      if (result.data.role !== 'admin') {
-        setError('Access Denied: You do not have admin privileges');
-        setTimeout(() => {
-          navigate('/welcome');
-        }, 3000);
-      } else {
-        setLoading(false);
-      }
+    if (!token) {
+      navigate('/login');
+      return;
     }
-  };
-
-  //   Real version to use API
-  const checkAdminPermission = async () => {
-    setLoading(true);
-    setError('');
 
     try {
-      const token = localStorage.getItem('token');
-      
-      if (!token) {
-        navigate('/login');
+      const [usersRes, issuesRes] = await Promise.all([
+        fetch(`${API_BASE}/api/user/admin/viewAll`, {
+          headers: { 'token': token },
+        }),
+        fetch(`${API_BASE}/api/issue/admin/viewAll`, {
+          headers: { 'token': token },
+        }),
+      ]);
+
+      const usersResult = await usersRes.json();
+      const issuesResult = await issuesRes.json();
+
+      if (usersResult.code === 200) {
+        setUsers(usersResult.data || []);
+      } else {
+        setError(usersResult.msg || 'Failed to load user data.');
         return;
       }
 
-      const response = await fetch('http://localhost:8080/api/user/get/user', {
-        method: 'GET',
-        headers: {
-          'token': token,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch user info');
-      }
-
-      const result = await response.json();
-      
-      if (result.code === 200 && result.data) {
-        setUserInfo(result.data);
-        
-        if (result.data.role !== 'admin') {
-          setError('Access Denied: You do not have admin privileges');
-          setTimeout(() => {
-            navigate('/');
-          }, 3000);
-        } else {
-          setLoading(false);
-        }
+      if (issuesResult.code === 200) {
+        setIssues(issuesResult.data || []);
       } else {
-        throw new Error('Invalid response');
+        setError(issuesResult.msg || 'Failed to load issue data.');
       }
-
-    } catch (err: any) {
-      console.error('Permission check failed:', err);
-      setError('Failed to verify permissions. Redirecting to login...');
-      setTimeout(() => {
-        navigate('/login');
-      }, 2000);
+    } catch (err) {
+      console.error('Failed to load dashboard data:', err);
+      setError('Failed to connect to the server. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Loading
-  if (loading && !error) {
+  if (loading) {
     return (
-      <Box 
-        sx={{ 
-          display: 'flex', 
-          flexDirection: 'column',
-          justifyContent: 'center', 
-          alignItems: 'center', 
-          minHeight: '80vh',
-          color: '#fff'
-        }}
-      >
-        <CircularProgress sx={{ color: '#fff', mb: 2 }} />
-        <Typography variant="h6">Verifying admin permissions...</Typography>
-        <Typography variant="body2" sx={{ mt: 1, color: 'rgba(255,255,255,0.6)' }}>
-          {testMode ? '(Test Mode - Using Mock Data)' : '(Production Mode - Calling API)'}
-        </Typography>
+      <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
+        <CircularProgress sx={{ mb: 2 }} />
+        <Typography variant="h6" color="text.secondary">Loading admin dashboard...</Typography>
       </Box>
     );
   }
 
-  //  error
-if (error) {
-  return (
-    <Box 
-      sx={{ 
-        display: 'flex', 
-        flexDirection: 'column',
-        justifyContent: 'center', 
-        alignItems: 'center', 
-        minHeight: '100vh',
-        bgcolor: '#fff',
-        p: 3
-      }}
-    >
-      <Alert severity="error" sx={{ maxWidth: 500, mb: 2 }}>
-        <Typography variant="h6">{error}</Typography>
+  if (error) {
+    return (
+      <Alert severity="error" sx={{ mt: 2 }}>
+        {error}
       </Alert>
-      
-      {testMode && (
-        <Paper sx={{ p: 2, mt: 2, bgcolor: '#f5f5f5', border: '1px solid #e0e0e0' }}>
-          <Typography variant="body2" sx={{ color: '#000', mb: 1 }}>
-            Test Mode: Try switching role
-          </Typography>
-          <Button 
-            variant="contained" 
-            size="small"
-            onClick={() => {
-              setError('');  
-              setMockRole('admin');  // switch
-            }}
-            sx={{
-              bgcolor: '#4caf50',
-              '&:hover': {
-                bgcolor: '#45a049'
-              }
-            }}
-          >
-            Switch to Admin
-          </Button>
-        </Paper>
-      )}
-    </Box>
-  );
-}
+    );
+  }
 
-  // Admin main page 
+  const stats = {
+    totalUsers: users.length,
+    adminCount: users.filter((u) => u.role === 'admin').length,
+    userCount: users.filter((u) => u.role !== 'admin').length,
+    totalIssues: issues.length,
+    pendingIssues: issues.filter((i) => i.status === 'pending').length,
+    processingIssues: issues.filter((i) => i.status === 'processing').length,
+    completedIssues: issues.filter((i) => i.status === 'completed').length,
+  };
+
   return (
-      <Box sx={{ 
-    p: 3, 
-    color: '#000',  
-    bgcolor: '#fff',  
-    minHeight: '100vh'  
-  }}>
-
-
-      {/*  title */}
-      <Typography variant="h4" sx={{ mb: 3 }}>
+    <Box sx={{ p: 1 }}>
+      <Typography variant="h4" sx={{ mb: 3, fontWeight: 600, color: '#fff' }}>
         Admin Dashboard
       </Typography>
 
-      {/* User information */}
-      <Paper sx={{ mb: 4, p: 3, bgcolor: 'rgba(255,255,255,0.1)' }}>
-        <Typography variant="h6" sx={{ mb: 2 }}>
-          👤 Current User Information
+      {/* Stats Cards */}
+      <Grid container spacing={2} sx={{ mb: 4 }}>
+        <Grid item xs={12} sm={6} md={3}>
+          <Paper sx={{ p: 3, textAlign: 'center', borderRadius: 2 }}>
+            <PeopleIcon sx={{ fontSize: 36, color: '#1976d2', mb: 1 }} />
+            <Typography variant="h4" sx={{ fontWeight: 700, color: '#1976d2' }}>
+              {stats.totalUsers}
+            </Typography>
+            <Typography variant="body2" color="text.secondary">Total Users</Typography>
+          </Paper>
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <Paper sx={{ p: 3, textAlign: 'center', borderRadius: 2 }}>
+            <ReportIcon sx={{ fontSize: 36, color: '#ed6c02', mb: 1 }} />
+            <Typography variant="h4" sx={{ fontWeight: 700, color: '#ed6c02' }}>
+              {stats.totalIssues}
+            </Typography>
+            <Typography variant="body2" color="text.secondary">Total Issues</Typography>
+          </Paper>
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <Paper sx={{ p: 3, textAlign: 'center', borderRadius: 2 }}>
+            <Typography variant="h4" sx={{ fontWeight: 700, color: '#f59e0b' }}>
+              {stats.pendingIssues}
+            </Typography>
+            <Typography variant="body2" color="text.secondary">Pending Issues</Typography>
+          </Paper>
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <Paper sx={{ p: 3, textAlign: 'center', borderRadius: 2 }}>
+            <Typography variant="h4" sx={{ fontWeight: 700, color: '#2e7d32' }}>
+              {stats.completedIssues}
+            </Typography>
+            <Typography variant="body2" color="text.secondary">Completed Issues</Typography>
+          </Paper>
+        </Grid>
+      </Grid>
+
+      {/* User List */}
+      <Paper elevation={2} sx={{ p: 3, borderRadius: 2 }}>
+        <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
+          All Users ({stats.totalUsers})
         </Typography>
-        <Box sx={{ display: 'grid', gap: 1 }}>
-          <Typography><strong>Username:</strong> {userInfo?.username}</Typography>
-          <Typography><strong>Role:</strong> {userInfo?.role}</Typography>
-          <Typography><strong>Email:</strong> {userInfo?.email || 'N/A'}</Typography>
-        </Box>
+        <TableContainer>
+          <Table>
+            <TableHead>
+              <TableRow sx={{ bgcolor: '#f5f5f5' }}>
+                <TableCell sx={{ fontWeight: 600 }}>ID</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>Name</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>Email</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>Role</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {users.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={4} align="center" sx={{ py: 4 }}>
+                    <Typography variant="body2" color="text.secondary">No users found.</Typography>
+                  </TableCell>
+                </TableRow>
+              ) : (
+                users.map((user) => (
+                  <TableRow key={user.id} sx={{ '&:hover': { bgcolor: '#f9f9f9' } }}>
+                    <TableCell>#{user.id}</TableCell>
+                    <TableCell>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Avatar sx={{ width: 32, height: 32, bgcolor: user.role === 'admin' ? '#d32f2f' : '#1976d2', fontSize: '0.875rem' }}>
+                          {user.role === 'admin'
+                            ? <AdminPanelSettingsIcon sx={{ fontSize: 18 }} />
+                            : <PersonIcon sx={{ fontSize: 18 }} />}
+                        </Avatar>
+                        <Typography variant="body2">{user.name}</Typography>
+                      </Box>
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="body2">{user.email}</Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Chip
+                        label={user.role === 'admin' ? 'Admin' : 'User'}
+                        color={user.role === 'admin' ? 'error' : 'primary'}
+                        size="small"
+                      />
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
       </Paper>
-
-      {/* Admin function */}
-
     </Box>
   );
 };
 
-
 export default AdminPage;
-
-
