@@ -13,8 +13,7 @@ import {
   Card,
   CardContent,
   Avatar,
-  Switch,
-  FormControlLabel,
+  CircularProgress,
 } from "@mui/material";
 import HomeIcon from "@mui/icons-material/Home";
 import AssignmentIcon from "@mui/icons-material/Assignment";
@@ -33,6 +32,7 @@ import Issuelist from "./List";
 import Profile from "./Profile";
 
 const drawerWidth = 220;
+const API_BASE = "http://localhost:8000";
 
 // Homepage
 const HomePage: React.FC = () => {
@@ -56,7 +56,6 @@ const HomePage: React.FC = () => {
       </Paper>
 
       <Grid container spacing={3}>
-        {/* 4 cards */}
         <Grid item xs={12} md={6} lg={3}>
           <Card elevation={2} sx={{ borderRadius: 2, height: "100%" }}>
             <CardContent>
@@ -141,23 +140,13 @@ const Welcome: React.FC<WelcomeProps> = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Test mode
-  const [testMode, setTestMode] = useState(true);
-  const [mockRole, setMockRole] = useState<'admin' | 'user'>('user');
-  const [userRole, setUserRole] = useState<'admin' | 'user'>('user');
+  const [userRole, setUserRole] = useState<'admin' | 'user' | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  // Get the status of user
   useEffect(() => {
-    if (testMode) {
-      //Mock
-      setUserRole(mockRole);
-    } else {
-      //Actual
-      fetchUserRole();
-    }
-  }, [testMode, mockRole]);
+    fetchUserRole();
+  }, []);
 
-  // Actual
   const fetchUserRole = async () => {
     try {
       const token = localStorage.getItem('token');
@@ -166,7 +155,7 @@ const Welcome: React.FC<WelcomeProps> = ({ children }) => {
         return;
       }
 
-      const response = await fetch('http://localhost:8080/api/user/get/user', {
+      const response = await fetch(`${API_BASE}/api/user/get/user`, {
         method: 'GET',
         headers: {
           'token': token,
@@ -179,34 +168,43 @@ const Welcome: React.FC<WelcomeProps> = ({ children }) => {
       }
 
       const result = await response.json();
-      
+
       if (result.code === 200 && result.data) {
-        setUserRole(result.data.role);
+        setUserRole(result.data.role === 'admin' ? 'admin' : 'user');
       } else {
         throw new Error('Invalid response');
       }
-
     } catch (err) {
       console.error('Failed to fetch user role:', err);
       navigate('/login');
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    navigate("/login");
+  const handleLogout = async () => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      try {
+        await fetch(`${API_BASE}/api/user/logout`, {
+          method: 'GET',
+          headers: { 'token': token }
+        });
+      } catch (e) {
+        // ignore error, proceed with local logout
+      }
+    }
+    localStorage.removeItem('token');
+    navigate('/login');
   };
 
-  // Different pages
   const getMenuItems = () => {
     if (userRole === 'admin') {
-      // Admin page
       return [
         { text: "Admin", icon: <AdminPanelSettingsIcon />, path: "/welcome/admin" },
         { text: "Issues", icon: <ListAltIcon />, path: "/welcome/viewissues" },
       ];
     } else {
-      // User page
       return [
         { text: "Home page", icon: <HomeIcon />, path: "/welcome" },
         { text: "Report", icon: <AssignmentIcon />, path: "/welcome/user/report" },
@@ -216,65 +214,18 @@ const Welcome: React.FC<WelcomeProps> = ({ children }) => {
     }
   };
 
+  if (loading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
+        <CircularProgress sx={{ color: '#fff' }} />
+      </Box>
+    );
+  }
+
   const menuItems = getMenuItems();
 
   return (
     <Box sx={{ position: "relative", width: "100%", height: "100%" }}>
-      {/* Test board */}
-      {testMode && (
-        <Paper
-          sx={{
-            position: "fixed",
-            top: 80,
-            right: 30,
-            zIndex: 1400,
-            p: 2,
-            bgcolor: 'rgba(33, 150, 243, 0.95)',
-            color: '#fff',
-            minWidth: 200,
-          }}
-        >
-          <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
-            🧪 Test Mode
-          </Typography>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-            <Button
-              variant={mockRole === 'user' ? 'contained' : 'outlined'}
-              size="small"
-              onClick={() => setMockRole('user')}
-              sx={{
-                color: mockRole === 'user' ? '#2196f3' : '#fff',
-                bgcolor: mockRole === 'user' ? '#fff' : 'transparent',
-                borderColor: '#fff',
-                '&:hover': {
-                  bgcolor: mockRole === 'user' ? '#f5f5f5' : 'rgba(255,255,255,0.1)',
-                }
-              }}
-            >
-              Login as User
-            </Button>
-            <Button
-              variant={mockRole === 'admin' ? 'contained' : 'outlined'}
-              size="small"
-              onClick={() => setMockRole('admin')}
-              sx={{
-                color: mockRole === 'admin' ? '#2196f3' : '#fff',
-                bgcolor: mockRole === 'admin' ? '#fff' : 'transparent',
-                borderColor: '#fff',
-                '&:hover': {
-                  bgcolor: mockRole === 'admin' ? '#f5f5f5' : 'rgba(255,255,255,0.1)',
-                }
-              }}
-            >
-              Login as Admin
-            </Button>
-          </Box>
-          <Typography variant="caption" sx={{ mt: 1, display: 'block', opacity: 0.8 }}>
-            Current Role: {userRole}
-          </Typography>
-        </Paper>
-      )}
-
       {/* Logout button */}
       <Box
         sx={{
@@ -314,7 +265,6 @@ const Welcome: React.FC<WelcomeProps> = ({ children }) => {
               backgroundColor: "#1a1a1aff",
               color: "#fff",
             },
-
             "& .MuiListItemText-primary": {
               fontSize: "1rem",
               fontWeight: 600,
@@ -365,7 +315,6 @@ const Welcome: React.FC<WelcomeProps> = ({ children }) => {
           }}
         >
           <Routes>
-            {/* Different pages */}
             {userRole === 'user' && (
               <>
                 <Route index element={<HomePage />} />
@@ -374,7 +323,7 @@ const Welcome: React.FC<WelcomeProps> = ({ children }) => {
                 <Route path="profile" element={<Profile />} />
               </>
             )}
-            
+
             {userRole === 'admin' && (
               <>
                 <Route index element={<Admin />} />
