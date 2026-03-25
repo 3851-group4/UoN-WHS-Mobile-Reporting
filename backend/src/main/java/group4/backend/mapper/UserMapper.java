@@ -18,6 +18,9 @@ public interface UserMapper {
     @Select("select * from user where email = #{email}")
     User selectByEmail(String email);
 
+    @Select("select * from user where id = #{id}")
+    User selectById(Long id);
+
     @Select("select * from user")
     List<User> selectAll();
 }

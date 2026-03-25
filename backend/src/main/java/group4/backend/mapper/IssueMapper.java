@@ -15,7 +15,10 @@ public interface IssueMapper  {
     void insert(Issue issue);
 
 
-    void update(Issue issue);
+
+
+
+    int update(Issue issue);
 
     @Select("select * from issue where id=#{id}")
     Issue selectById(Long id);

@@ -5,6 +5,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @Configuration
 public class MinioConfig {
 
@@ -16,6 +19,8 @@ public class MinioConfig {
 
     @Value("${minio.secret-key}")
     private String secretKey=System.getenv("MINIO_SECRET_KEY");
+
+
 
     @Bean
     public MinioClient minioClient() {

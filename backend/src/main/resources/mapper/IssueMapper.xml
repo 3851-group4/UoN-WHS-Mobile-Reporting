@@ -16,8 +16,14 @@
                 <if test="description != null and description != ''">
                     description = #{description},
                 </if>
+                <if test="brief != null and brief != ''">
+                    brief = #{brief},
+                </if>
                 <if test="location != null and location != ''">
                     location = #{location},
+                </if>
+                <if test="witnessInfo != null and witnessInfo != ''">
+                    witnessInfo = #{witnessInfo},
                 </if>
                 <if test="happenTime != null">
                     happen_time = #{happenTime},

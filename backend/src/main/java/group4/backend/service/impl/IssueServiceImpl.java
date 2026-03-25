@@ -3,9 +3,12 @@ package group4.backend.service.impl;
 import group4.backend.dto.IssueAddOrUpdateDto;
 import group4.backend.entity.Issue;
 import group4.backend.entity.IssuePicture;
+import group4.backend.entity.User;
 import group4.backend.enums.IssueStatusEnum;
 import group4.backend.mapper.IssueMapper;
 import group4.backend.mapper.IssuePictureMapper;
+import group4.backend.mapper.UserMapper;
+import group4.backend.service.EmailService;
 import group4.backend.service.IssueService;
 import group4.backend.vo.IssueVo;
 import org.springframework.beans.BeanUtils;
@@ -25,6 +28,12 @@ public class IssueServiceImpl implements IssueService {
 
     @Autowired
     IssuePictureMapper issuePictureMapper;
+
+    @Autowired
+    UserMapper userMapper;
+
+    @Autowired
+    EmailService emailService;
 
     @Transactional
     @Override
@@ -162,7 +171,15 @@ public class IssueServiceImpl implements IssueService {
             throw new RuntimeException("invalid status");
         }
 
+        String oldStatus = issue.getStatus();
+
         // update status
         issueMapper.updateStatus(issueId, status, LocalDateTime.now());
+
+        // send email notification to the issue owner
+        User user = userMapper.selectById(issue.getUserId());
+        if (user != null && user.getEmail() != null) {
+            emailService.sendIssueStatusChangeEmail(user.getEmail(), issue.getTitle(), oldStatus, status);
+        }
     }
 }
