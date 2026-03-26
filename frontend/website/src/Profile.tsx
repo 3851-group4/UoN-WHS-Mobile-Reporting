@@ -15,6 +15,7 @@ import EmailIcon from "@mui/icons-material/Email";
 import BadgeIcon from "@mui/icons-material/Badge";
 import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
 import FingerprintIcon from "@mui/icons-material/Fingerprint";
+import { getMockCurrentUser, shouldUseMock } from "./mock";
 
 interface UserInfo {
   id: number;
@@ -33,6 +34,12 @@ const Profile: React.FC = () => {
   }, []);
 
   const fetchUserInfo = async () => {
+    if (shouldUseMock()) {
+      setUserInfo(getMockCurrentUser());
+      setLoading(false);
+      return;
+    }
+
     try {
       const token = localStorage.getItem("token");
       if (!token) {

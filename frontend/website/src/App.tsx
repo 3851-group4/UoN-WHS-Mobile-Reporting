@@ -4,12 +4,11 @@ import { Container, Typography, Box, Paper } from "@mui/material";
 import Login from "./Login";
 import Register from "./Register";
 import Welcome from "./Welcome";
-import Admin from "./Admin";
 
 const App: FC = () => {
     const location = useLocation();
     
-    // 判断是否是 Welcome 相关页面（用于控制布局）
+    // Control page
     const isWelcomePage = location.pathname.startsWith("/welcome");
 
     return (
@@ -30,7 +29,7 @@ const App: FC = () => {
             backgroundSize: "cover",
             backgroundPosition: "center",
             backgroundAttachment: "fixed",
-            filter: "blur(2.5px)", // 调整数值控制模糊程度
+            filter: "blur(2.5px)", 
             zIndex: -1,
         },
         "&::after": {
@@ -46,12 +45,12 @@ const App: FC = () => {
             }}
         >
             {isWelcomePage ? (
-                // Welcome 页面及其子页面：全屏显示
+                // Welcome page and its subs
                 <Routes>
                     <Route path="/welcome/*" element={<Welcome />} />
                 </Routes>
             ) : (
-                // Login 和 Register 页面：居中卡片布局
+                // Login and Register 
                 <Container maxWidth="md">
                     <Paper elevation={3} sx={{ p: 4, borderRadius: 2 }}>
                         <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>

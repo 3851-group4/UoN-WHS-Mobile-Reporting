@@ -1,0 +1,598 @@
+/**
+ * Global CSS Styles for UoN Safety Platform
+ * File: frontend/index.css
+ * 
+ * This file contains:
+ * - CSS Custom Properties (variables) for consistent theming
+ * - Global resets and base styles
+ * - Custom utility classes
+ * - Responsive design utilities
+ * - Animations and transitions
+ */
+
+/* ==================== CSS CUSTOM PROPERTIES ==================== */
+:root {
+  /* Primary Colors - University/Safety Theme */
+  --primary-color: #1976d2;
+  --primary-dark: #115293;
+  --primary-light: #42a5f5;
+  --secondary-color: #dc004e;
+  --secondary-dark: #9a0036;
+  --secondary-light: #e33371;
+
+  /* Semantic Colors */
+  --success-color: #2e7d32;
+  --warning-color: #ed6c02;
+  --error-color: #d32f2f;
+  --info-color: #0288d1;
+
+  /* Neutral Colors */
+  --background-color: #f5f5f5;
+  --surface-color: #ffffff;
+  --text-primary: #212121;
+  --text-secondary: #757575;
+  --text-disabled: #bdbdbd;
+  --border-color: #e0e0e0;
+
+  /* Dark Mode Colors */
+  --dark-background: #121212;
+  --dark-surface: #1e1e1e;
+  --dark-text-primary: #ffffff;
+  --dark-text-secondary: #b0b0b0;
+
+  /* Spacing System (8px base) */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  --spacing-xxl: 48px;
+
+  /* Typography */
+  --font-family: 'Roboto', 'Helvetica', 'Arial', sans-serif;
+  --font-size-base: 16px;
+  --font-size-sm: 14px;
+  --font-size-lg: 18px;
+  --font-size-xl: 24px;
+  --font-weight-light: 300;
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-bold: 700;
+
+  /* Border Radius */
+  --border-radius-sm: 4px;
+  --border-radius-md: 8px;
+  --border-radius-lg: 16px;
+  --border-radius-full: 9999px;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.12);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 20px rgba(0, 0, 0, 0.15);
+  --shadow-xl: 0 20px 40px rgba(0, 0, 0, 0.2);
+
+  /* Transitions */
+  --transition-fast: 150ms ease-in-out;
+  --transition-normal: 250ms ease-in-out;
+  --transition-slow: 350ms ease-in-out;
+
+  /* Z-index Layers */
+  --z-dropdown: 1000;
+  --z-sticky: 1020;
+  --z-fixed: 1030;
+  --z-modal-backdrop: 1040;
+  --z-modal: 1050;
+  --z-popover: 1060;
+  --z-tooltip: 1070;
+}
+
+/* ==================== GLOBAL RESETS ==================== */
+
+/* Box sizing reset */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* Remove default margin and padding */
+* {
+  margin: 0;
+  padding: 0;
+}
+
+/* HTML and Body base styles */
+html {
+  font-size: var(--font-size-base);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-family);
+  font-weight: var(--font-weight-regular);
+  color: var(--text-primary);
+  background-color: var(--background-color);
+  line-height: 1.5;
+  min-height: 100vh;
+}
+
+/* Remove default link styles */
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* Image responsiveness */
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* ==================== ROOT ELEMENT ==================== */
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ==================== UTILITY CLASSES ==================== */
+
+/* Flexbox utilities */
+.flex {
+  display: flex;
+}
+
+.flex-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.flex-column {
+  display: flex;
+  flex-direction: column;
+}
+
+.flex-between {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Spacing utilities */
+.mt-1 { margin-top: var(--spacing-sm); }
+.mt-2 { margin-top: var(--spacing-md); }
+.mt-3 { margin-top: var(--spacing-lg); }
+.mt-4 { margin-top: var(--spacing-xl); }
+
+.mb-1 { margin-bottom: var(--spacing-sm); }
+.mb-2 { margin-bottom: var(--spacing-md); }
+.mb-3 { margin-bottom: var(--spacing-lg); }
+.mb-4 { margin-bottom: var(--spacing-xl); }
+
+.p-1 { padding: var(--spacing-sm); }
+.p-2 { padding: var(--spacing-md); }
+.p-3 { padding: var(--spacing-lg); }
+.p-4 { padding: var(--spacing-xl); }
+
+/* Text utilities */
+.text-center {
+  text-align: center;
+}
+
+.text-left {
+  text-align: left;
+}
+
+.text-right {
+  text-align: right;
+}
+
+.text-bold {
+  font-weight: var(--font-weight-bold);
+}
+
+.text-uppercase {
+  text-transform: uppercase;
+}
+
+/* Color utilities */
+.text-primary {
+  color: var(--primary-color);
+}
+
+.text-error {
+  color: var(--error-color);
+}
+
+.text-success {
+  color: var(--success-color);
+}
+
+/* ==================== CUSTOM COMPONENT STYLES ==================== */
+
+/* Enhanced Paper/Card styles */
+.custom-paper {
+  background-color: var(--surface-color);
+  border-radius: var(--border-radius-md);
+  box-shadow: var(--shadow-md);
+  padding: var(--spacing-lg);
+  transition: box-shadow var(--transition-normal);
+}
+
+.custom-paper:hover {
+  box-shadow: var(--shadow-lg);
+}
+
+/* Custom button enhancements */
+.btn-gradient {
+  background: linear-gradient(45deg, var(--primary-color), var(--primary-light));
+  color: white;
+  border: none;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.btn-gradient:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.btn-gradient:active {
+  transform: translateY(0);
+}
+
+/* Form enhancements */
+.form-container {
+  max-width: 500px;
+  margin: 0 auto;
+  padding: var(--spacing-lg);
+}
+
+.form-header {
+  margin-bottom: var(--spacing-lg);
+  text-align: center;
+  color: var(--text-primary);
+}
+
+/* Loading spinner */
+.spinner {
+  border: 3px solid var(--border-color);
+  border-top-color: var(--primary-color);
+  border-radius: var(--border-radius-full);
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ==================== NAVIGATION DRAWER ENHANCEMENTS ==================== */
+
+/* Custom drawer styles */
+.nav-drawer {
+  background: linear-gradient(180deg, #1a1a1a 0%, #2d2d2d 100%);
+}
+
+.nav-drawer-item {
+  margin: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--border-radius-sm);
+  transition: background-color var(--transition-fast), transform var(--transition-fast);
+}
+
+.nav-drawer-item:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  transform: translateX(5px);
+}
+
+.nav-drawer-item.active {
+  background-color: var(--primary-color);
+  box-shadow: var(--shadow-sm);
+}
+
+/* ==================== AUTHENTICATION PAGE STYLES ==================== */
+
+/* Login/Register page background */
+.auth-background {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Login/Register container enhancements */
+.auth-container {
+  width: 100%;
+  max-width: 450px;
+  padding: var(--spacing-md);
+}
+
+.auth-paper {
+  background-color: var(--surface-color);
+  border-radius: var(--border-radius-lg);
+  padding: var(--spacing-xl);
+  box-shadow: var(--shadow-xl);
+}
+
+/* Logo area */
+.logo-container {
+  text-align: center;
+  margin-bottom: var(--spacing-lg);
+}
+
+.logo-container img {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto var(--spacing-md);
+}
+
+/* ==================== ALERT/NOTIFICATION STYLES ==================== */
+
+/* Custom alert styles */
+.alert-custom {
+  padding: var(--spacing-md);
+  border-radius: var(--border-radius-sm);
+  margin-bottom: var(--spacing-md);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.alert-error {
+  background-color: #ffebee;
+  color: var(--error-color);
+  border-left: 4px solid var(--error-color);
+}
+
+.alert-success {
+  background-color: #e8f5e9;
+  color: var(--success-color);
+  border-left: 4px solid var(--success-color);
+}
+
+.alert-warning {
+  background-color: #fff3e0;
+  color: var(--warning-color);
+  border-left: 4px solid var(--warning-color);
+}
+
+.alert-info {
+  background-color: #e3f2fd;
+  color: var(--info-color);
+  border-left: 4px solid var(--info-color);
+}
+
+/* ==================== RESPONSIVE DESIGN ==================== */
+
+/* Mobile devices (portrait) */
+@media (max-width: 600px) {
+  :root {
+    --font-size-base: 14px;
+  }
+
+  .auth-container {
+    padding: var(--spacing-sm);
+  }
+
+  .auth-paper {
+    padding: var(--spacing-lg);
+  }
+
+  /* Hide drawer on mobile or make it collapsible */
+  .nav-drawer {
+    width: 60px;
+  }
+
+  .nav-drawer-text {
+    display: none;
+  }
+}
+
+/* Tablets (portrait and landscape) */
+@media (min-width: 601px) and (max-width: 960px) {
+  .auth-container {
+    max-width: 500px;
+  }
+}
+
+/* Desktop and larger screens */
+@media (min-width: 961px) {
+  .auth-container {
+    max-width: 450px;
+  }
+}
+
+/* ==================== ACCESSIBILITY ==================== */
+
+/* Focus styles for keyboard navigation */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
+/* Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  :root {
+    --border-color: #000000;
+    --text-primary: #000000;
+  }
+}
+
+/* ==================== PRINT STYLES ==================== */
+@media print {
+  /* Hide navigation and buttons when printing */
+  .nav-drawer,
+  button,
+  .no-print {
+    display: none !important;
+  }
+
+  /* Ensure content prints properly */
+  body {
+    background-color: white;
+    color: black;
+  }
+
+  /* Remove shadows and borders for printing */
+  .custom-paper,
+  .auth-paper {
+    box-shadow: none;
+    border: 1px solid #000;
+  }
+}
+
+/* ==================== ANIMATIONS ==================== */
+
+/* Fade in animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in {
+  animation: fadeIn var(--transition-normal) ease-out;
+}
+
+/* Slide in from right */
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.slide-in-right {
+  animation: slideInRight var(--transition-normal) ease-out;
+}
+
+/* Pulse animation for notifications */
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+.pulse {
+  animation: pulse 2s ease-in-out infinite;
+}
+
+/* ==================== SCROLLBAR STYLING ==================== */
+
+/* Custom scrollbar for Webkit browsers */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--background-color);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--text-disabled);
+  border-radius: var(--border-radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary);
+}
+
+/* ==================== ADDITIONAL UTILITIES ==================== */
+
+/* Hide elements visually but keep for screen readers */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* Prevent text selection */
+.no-select {
+  user-select: none;
+}
+
+/* Full width container */
+.container-full {
+  width: 100%;
+  max-width: 100%;
+}
+
+/* Centered container */
+.container-center {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 var(--spacing-md);
+}
+
+/* Glass morphism effect */
+.glass {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: var(--shadow-md);
+}
+
+/* Divider */
+.divider {
+  height: 1px;
+  background-color: var(--border-color);
+  margin: var(--spacing-md) 0;
+}
+
+/* Badge */
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: var(--border-radius-full);
+  font-size: 12px;
+  font-weight: var(--font-weight-medium);
+  background-color: var(--primary-color);
+  color: white;
+}
+
+/* ==================== END ==================== */
