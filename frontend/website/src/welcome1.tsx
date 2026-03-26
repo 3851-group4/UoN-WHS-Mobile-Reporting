@@ -129,11 +129,7 @@ const HomePage: React.FC = () => {
   );
 };
 
-interface WelcomeProps {
-  children?: React.ReactNode;
-}
-
-const Welcome: React.FC<WelcomeProps> = ({ children }) => {
+const Welcome: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
 

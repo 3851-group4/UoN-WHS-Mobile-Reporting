@@ -33,6 +33,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
 import EditIcon from '@mui/icons-material/Edit';
+import { getMockIssues, saveMockIssues, shouldUseMock } from './mock';
 
 const API_BASE = 'http://localhost:8000';
 
@@ -91,6 +92,12 @@ const ManageIssues: React.FC = () => {
   const fetchIssues = async () => {
     setLoading(true);
     setError('');
+    if (shouldUseMock()) {
+      setIssues(getMockIssues());
+      setLoading(false);
+      return;
+    }
+
     try {
       const res = await fetch(`${API_BASE}/api/issue/admin/viewAll`, {
         headers: { 'token': getToken() },
@@ -127,6 +134,18 @@ const ManageIssues: React.FC = () => {
     if (!selectedIssue) return;
     setStatusSubmitting(true);
     try {
+      if (shouldUseMock()) {
+        const updatedIssues = getMockIssues().map((issue) =>
+          issue.id === selectedIssue.id ? { ...issue, status: newStatus } : issue
+        );
+        saveMockIssues(updatedIssues);
+        setStatusDialogOpen(false);
+        setSuccessMessage(`Issue #${selectedIssue.id} status updated to "${STATUS_LABELS[newStatus]}"!`);
+        setTimeout(() => setSuccessMessage(''), 3000);
+        fetchIssues();
+        return;
+      }
+
       const res = await fetch(
         `${API_BASE}/api/issue/admin/updateStatus/${selectedIssue.id}?status=${newStatus}`,
         {

@@ -20,6 +20,7 @@ import PeopleIcon from '@mui/icons-material/People';
 import ReportIcon from '@mui/icons-material/Report';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import PersonIcon from '@mui/icons-material/Person';
+import { DEFAULT_MOCK_ADMIN, DEFAULT_MOCK_USER, getMockIssues, shouldUseMock } from './mock';
 
 const API_BASE = 'http://localhost:8000';
 
@@ -52,6 +53,22 @@ const AdminPage: React.FC = () => {
     setLoading(true);
     setError('');
     const token = getToken();
+
+    if (shouldUseMock()) {
+      setUsers([
+        DEFAULT_MOCK_ADMIN,
+        DEFAULT_MOCK_USER,
+        {
+          id: 1002,
+          email: 'taylor.student@uon.edu.au',
+          name: 'Taylor Student',
+          role: 'user',
+        },
+      ]);
+      setIssues(getMockIssues());
+      setLoading(false);
+      return;
+    }
 
     if (!token) {
       navigate('/login');

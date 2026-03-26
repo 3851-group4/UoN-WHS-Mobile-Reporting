@@ -32,6 +32,14 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import CloseIcon from '@mui/icons-material/Close';
+import AddPhotoAlternateIcon from '@mui/icons-material/AddPhotoAlternate';
+import {
+  getMockCurrentUser,
+  getMockIssues,
+  saveMockIssues,
+  shouldUseMock,
+} from './mock';
+import { uploadIssueImages } from './issueImages';
 
 const API_BASE = 'http://localhost:8000';
 
@@ -64,6 +72,11 @@ interface EditForm {
   dateTime: string;
   description: string;
   witnessInfo: string;
+}
+
+interface PendingImage {
+  file: File;
+  preview: string;
 }
 
 const statusLabel: Record<string, string> = {
@@ -103,12 +116,26 @@ const ViewIssues: React.FC = () => {
   const [deleteSubmitting, setDeleteSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [editImageUrls, setEditImageUrls] = useState<string[]>([]);
+  const [pendingImages, setPendingImages] = useState<PendingImage[]>([]);
 
   const getToken = () => localStorage.getItem('token') || '';
+
+  const clearPendingImages = () => {
+    pendingImages.forEach((image) => URL.revokeObjectURL(image.preview));
+    setPendingImages([]);
+  };
 
   const fetchIssues = async () => {
     setLoading(true);
     setError('');
+    if (shouldUseMock()) {
+      const currentUser = getMockCurrentUser();
+      setIssues(getMockIssues().filter((issue) => issue.userId === currentUser.id));
+      setLoading(false);
+      return;
+    }
+
     try {
       const res = await fetch(`${API_BASE}/api/issue/view`, {
         method: 'GET',
@@ -139,6 +166,7 @@ const ViewIssues: React.FC = () => {
 
   // ---- Edit ----
   const handleEditOpen = (issue: IssueVo) => {
+    clearPendingImages();
     // Try to parse issueType from title "[Type] brief"
     const typeMatch = issue.title.match(/^\[(.+?)\] /);
     setEditForm({
@@ -149,17 +177,88 @@ const ViewIssues: React.FC = () => {
       description: issue.description || '',
       witnessInfo: issue.witnessInfo || '',
     });
+    setEditImageUrls(issue.urls || []);
     setSelectedIssue(issue);
     setEditDialogOpen(true);
+  };
+
+  const handleEditClose = () => {
+    clearPendingImages();
+    setEditImageUrls([]);
+    setEditDialogOpen(false);
+  };
+
+  const handleEditImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) {
+      return;
+    }
+
+    const nextImages = files.map((file) => ({
+      file,
+      preview: URL.createObjectURL(file),
+    }));
+    setPendingImages((prev) => [...prev, ...nextImages]);
+    e.target.value = '';
+  };
+
+  const handleRemoveExistingImage = (url: string) => {
+    setEditImageUrls((prev) => prev.filter((item) => item !== url));
+  };
+
+  const handleRemovePendingImage = (index: number) => {
+    setPendingImages((prev) => {
+      const image = prev[index];
+      if (image) {
+        URL.revokeObjectURL(image.preview);
+      }
+      return prev.filter((_, idx) => idx !== index);
+    });
   };
 
   const handleEditSave = async () => {
     if (!selectedIssue) return;
     setEditSubmitting(true);
     try {
+      if (shouldUseMock()) {
+        const title = editForm.issueType
+          ? `[${editForm.issueType}] ${editForm.brief}`
+          : editForm.brief;
+        const finalUrls = [...editImageUrls, ...pendingImages.map((image) => image.preview)];
+
+        const updatedIssues = getMockIssues().map((issue) =>
+          issue.id === selectedIssue.id
+            ? {
+                ...issue,
+                title,
+                brief: editForm.brief,
+                description: editForm.description,
+                location: editForm.location,
+                witnessInfo: editForm.witnessInfo,
+                happenTime: editForm.dateTime
+                  ? new Date(editForm.dateTime).toISOString().slice(0, 19)
+                  : issue.happenTime,
+                urls: finalUrls,
+              }
+            : issue
+        );
+
+        saveMockIssues(updatedIssues);
+        handleEditClose();
+        setSuccessMessage('Mock report updated successfully!');
+        setTimeout(() => setSuccessMessage(''), 3000);
+        fetchIssues();
+        return;
+      }
+
       const title = editForm.issueType
         ? `[${editForm.issueType}] ${editForm.brief}`
         : editForm.brief;
+      const uploadedUrls = await uploadIssueImages(
+        pendingImages.map((image) => image.file),
+        getToken()
+      );
+      const finalUrls = [...editImageUrls, ...uploadedUrls];
 
       const body = {
         id: selectedIssue.id,
@@ -171,6 +270,7 @@ const ViewIssues: React.FC = () => {
         happenTime: editForm.dateTime
           ? new Date(editForm.dateTime).toISOString().slice(0, 19)
           : null,
+        urls: finalUrls,
       };
 
       const res = await fetch(`${API_BASE}/api/issue/upsert`, {
@@ -180,7 +280,7 @@ const ViewIssues: React.FC = () => {
       });
       const result = await res.json();
       if (result.code === 200) {
-        setEditDialogOpen(false);
+        handleEditClose();
         setSuccessMessage('Report updated successfully!');
         setTimeout(() => setSuccessMessage(''), 3000);
         fetchIssues();
@@ -204,6 +304,15 @@ const ViewIssues: React.FC = () => {
     if (!selectedIssue) return;
     setDeleteSubmitting(true);
     try {
+      if (shouldUseMock()) {
+        saveMockIssues(getMockIssues().filter((issue) => issue.id !== selectedIssue.id));
+        setDeleteDialogOpen(false);
+        setSuccessMessage('Mock report deleted successfully!');
+        setTimeout(() => setSuccessMessage(''), 3000);
+        fetchIssues();
+        return;
+      }
+
       const res = await fetch(`${API_BASE}/api/issue/delete/${selectedIssue.id}`, {
         method: 'DELETE',
         headers: { 'token': getToken() },
@@ -421,7 +530,7 @@ const ViewIssues: React.FC = () => {
       </Dialog>
 
       {/* Edit Dialog */}
-      <Dialog open={editDialogOpen} onClose={() => setEditDialogOpen(false)} maxWidth="md" fullWidth>
+      <Dialog open={editDialogOpen} onClose={handleEditClose} maxWidth="md" fullWidth>
         <DialogTitle>Edit Report</DialogTitle>
         <DialogContent dividers>
           <Grid container spacing={2} sx={{ mt: 1 }}>
@@ -485,10 +594,90 @@ const ViewIssues: React.FC = () => {
                 onChange={(e) => setEditForm((f) => ({ ...f, witnessInfo: e.target.value }))}
               />
             </Grid>
+            <Grid item xs={12}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
+                <Button
+                  component="label"
+                  variant="outlined"
+                  startIcon={<AddPhotoAlternateIcon />}
+                >
+                  Add Images
+                  <input
+                    hidden
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handleEditImageSelect}
+                  />
+                </Button>
+                <Typography variant="body2" color="text.secondary">
+                  Existing images will be kept unless you remove them below.
+                </Typography>
+              </Box>
+            </Grid>
+            {editImageUrls.length > 0 && (
+              <Grid item xs={12}>
+                <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                  Current Images ({editImageUrls.length})
+                </Typography>
+                <ImageList cols={3} gap={8}>
+                  {editImageUrls.map((url) => (
+                    <ImageListItem key={url} sx={{ position: 'relative', overflow: 'hidden', borderRadius: 2 }}>
+                      <img src={url} alt="Current issue" loading="lazy" style={{ height: 140, objectFit: 'cover' }} />
+                      <IconButton
+                        size="small"
+                        onClick={() => handleRemoveExistingImage(url)}
+                        sx={{
+                          position: 'absolute',
+                          top: 8,
+                          right: 8,
+                          bgcolor: 'rgba(0,0,0,0.6)',
+                          color: '#fff',
+                          '&:hover': { bgcolor: 'rgba(0,0,0,0.8)' },
+                        }}
+                      >
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
+                    </ImageListItem>
+                  ))}
+                </ImageList>
+              </Grid>
+            )}
+            {pendingImages.length > 0 && (
+              <Grid item xs={12}>
+                <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                  New Images To Upload ({pendingImages.length})
+                </Typography>
+                <ImageList cols={3} gap={8}>
+                  {pendingImages.map((image, index) => (
+                    <ImageListItem
+                      key={`${image.file.name}-${index}`}
+                      sx={{ position: 'relative', overflow: 'hidden', borderRadius: 2 }}
+                    >
+                      <img src={image.preview} alt={image.file.name} loading="lazy" style={{ height: 140, objectFit: 'cover' }} />
+                      <IconButton
+                        size="small"
+                        onClick={() => handleRemovePendingImage(index)}
+                        sx={{
+                          position: 'absolute',
+                          top: 8,
+                          right: 8,
+                          bgcolor: 'rgba(0,0,0,0.6)',
+                          color: '#fff',
+                          '&:hover': { bgcolor: 'rgba(0,0,0,0.8)' },
+                        }}
+                      >
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
+                    </ImageListItem>
+                  ))}
+                </ImageList>
+              </Grid>
+            )}
           </Grid>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setEditDialogOpen(false)} disabled={editSubmitting}>Cancel</Button>
+          <Button onClick={handleEditClose} disabled={editSubmitting}>Cancel</Button>
           <Button onClick={handleEditSave} variant="contained" color="primary" disabled={editSubmitting}>
             {editSubmitting ? 'Saving...' : 'Save Changes'}
           </Button>

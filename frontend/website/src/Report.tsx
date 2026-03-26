@@ -12,11 +12,18 @@ import {
   Select,
   alpha,
   Alert,
+  ImageList,
+  ImageListItem,
+  IconButton,
 } from "@mui/material";
 import {
   Send as SendIcon,
   Clear as ClearIcon,
+  AddPhotoAlternate as AddPhotoAlternateIcon,
+  Delete as DeleteIcon,
 } from "@mui/icons-material";
+import { createMockIssue, getMockIssues, saveMockIssues, shouldUseMock } from "./mock";
+import { uploadIssueImages } from "./issueImages";
 
 const API_BASE = "http://localhost:8000";
 
@@ -47,11 +54,17 @@ const emptyForm: ReportForm = {
   witnessInfo: "",
 };
 
+interface SelectedImage {
+  file: File;
+  preview: string;
+}
+
 const Reporting: React.FC = () => {
   const [formData, setFormData] = useState<ReportForm>(emptyForm);
   const [submitting, setSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+  const [selectedImages, setSelectedImages] = useState<SelectedImage[]>([]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -61,9 +74,39 @@ const Reporting: React.FC = () => {
   };
 
   const handleClear = () => {
-    setFormData(emptyForm);
     setSuccessMessage("");
     setErrorMessage("");
+    resetForm();
+  };
+
+  const resetForm = () => {
+    setFormData(emptyForm);
+    selectedImages.forEach((image) => URL.revokeObjectURL(image.preview));
+    setSelectedImages([]);
+  };
+
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) {
+      return;
+    }
+
+    const nextImages = files.map((file) => ({
+      file,
+      preview: URL.createObjectURL(file),
+    }));
+    setSelectedImages((prev) => [...prev, ...nextImages]);
+    e.target.value = "";
+  };
+
+  const handleRemoveImage = (index: number) => {
+    setSelectedImages((prev) => {
+      const image = prev[index];
+      if (image) {
+        URL.revokeObjectURL(image.preview);
+      }
+      return prev.filter((_, idx) => idx !== index);
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -73,6 +116,30 @@ const Reporting: React.FC = () => {
     setSuccessMessage("");
 
     try {
+      if (shouldUseMock()) {
+        const title = formData.issueType
+          ? `[${formData.issueType}] ${formData.brief}`
+          : formData.brief;
+        const urls = selectedImages.map((image) => image.preview);
+
+        const newIssue = createMockIssue({
+          title,
+          brief: formData.brief,
+          description: formData.description,
+          location: formData.location,
+          witnessInfo: formData.witnessInfo || "",
+          happenTime: formData.dateTime
+            ? new Date(formData.dateTime).toISOString().slice(0, 19)
+            : new Date().toISOString().slice(0, 19),
+          urls,
+        });
+
+        saveMockIssues([newIssue, ...getMockIssues()]);
+        resetForm();
+        setSuccessMessage("Mock report submitted successfully!");
+        return;
+      }
+
       const token = localStorage.getItem("token");
       if (!token) {
         setErrorMessage("Not authenticated. Please log in again.");
@@ -83,6 +150,10 @@ const Reporting: React.FC = () => {
       const title = formData.issueType
         ? `[${formData.issueType}] ${formData.brief}`
         : formData.brief;
+      const urls = await uploadIssueImages(
+        selectedImages.map((image) => image.file),
+        token
+      );
 
       const body = {
         title,
@@ -93,6 +164,7 @@ const Reporting: React.FC = () => {
         happenTime: formData.dateTime
           ? new Date(formData.dateTime).toISOString().slice(0, 19)
           : null,
+        urls,
       };
 
       const response = await fetch(`${API_BASE}/api/issue/upsert`, {
@@ -107,8 +179,8 @@ const Reporting: React.FC = () => {
       const result = await response.json();
 
       if (result.code === 200) {
+        resetForm();
         setSuccessMessage("Report submitted successfully!");
-        setFormData(emptyForm);
       } else {
         setErrorMessage(result.msg || "Failed to submit report. Please try again.");
       }
@@ -290,6 +362,61 @@ const Reporting: React.FC = () => {
                 }}
               />
             </Grid>
+
+            <Grid item xs={12}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 2, flexWrap: "wrap" }}>
+                <Button
+                  component="label"
+                  variant="outlined"
+                  startIcon={<AddPhotoAlternateIcon />}
+                >
+                  Add Images
+                  <input
+                    hidden
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handleImageSelect}
+                  />
+                </Button>
+                <Typography variant="body2" color="text.secondary">
+                  Add one or more photos to support this report
+                </Typography>
+              </Box>
+            </Grid>
+
+            {selectedImages.length > 0 && (
+              <Grid item xs={12}>
+                <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 600 }}>
+                  Selected Images ({selectedImages.length})
+                </Typography>
+                <ImageList cols={3} gap={12}>
+                  {selectedImages.map((image, index) => (
+                    <ImageListItem key={`${image.file.name}-${index}`} sx={{ overflow: "hidden", borderRadius: 2 }}>
+                      <img
+                        src={image.preview}
+                        alt={image.file.name}
+                        style={{ height: 150, objectFit: "cover" }}
+                      />
+                      <IconButton
+                        size="small"
+                        onClick={() => handleRemoveImage(index)}
+                        sx={{
+                          position: "absolute",
+                          top: 8,
+                          right: 8,
+                          bgcolor: "rgba(0,0,0,0.6)",
+                          color: "#fff",
+                          "&:hover": { bgcolor: "rgba(0,0,0,0.8)" },
+                        }}
+                      >
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
+                    </ImageListItem>
+                  ))}
+                </ImageList>
+              </Grid>
+            )}
           </Grid>
         </Paper>
 

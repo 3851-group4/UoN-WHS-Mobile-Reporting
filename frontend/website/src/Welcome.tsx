@@ -30,6 +30,14 @@ import Admin from "./Admin";
 import Manageissues from "./Manageissues";
 import Issuelist from "./List";
 import Profile from "./Profile";
+import {
+  clearMockSession,
+  ensureMockSession,
+  getMockCurrentUser,
+  hasRealSession,
+  setMockCurrentRole,
+  shouldUseMock,
+} from "./mock";
 
 const drawerWidth = 220;
 const API_BASE = "http://localhost:8000";
@@ -132,11 +140,30 @@ const HomePage: React.FC = () => {
   );
 };
 
-interface WelcomeProps {
-  children?: React.ReactNode;
-}
+const getMockRoleFromUrl = (pathname: string, search: string): "admin" | "user" | null => {
+  const params = new URLSearchParams(search);
+  const queryRole = params.get("mockRole");
 
-const Welcome: React.FC<WelcomeProps> = ({ children }) => {
+  if (queryRole === "admin" || queryRole === "user") {
+    return queryRole;
+  }
+
+  if (pathname.startsWith("/welcome/admin") || pathname.startsWith("/welcome/viewissues")) {
+    return "admin";
+  }
+
+  if (
+    pathname === "/welcome" ||
+    pathname.startsWith("/welcome/user/") ||
+    pathname.startsWith("/welcome/profile")
+  ) {
+    return "user";
+  }
+
+  return null;
+};
+
+const Welcome: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -145,9 +172,20 @@ const Welcome: React.FC<WelcomeProps> = ({ children }) => {
 
   useEffect(() => {
     fetchUserRole();
-  }, []);
+  }, [location.pathname, location.search]);
 
   const fetchUserRole = async () => {
+    if (shouldUseMock()) {
+      ensureMockSession();
+      const roleFromUrl = getMockRoleFromUrl(location.pathname, location.search);
+      if (roleFromUrl) {
+        setMockCurrentRole(roleFromUrl);
+      }
+      setUserRole(roleFromUrl ?? getMockCurrentUser().role);
+      setLoading(false);
+      return;
+    }
+
     try {
       const token = localStorage.getItem('token');
       if (!token) {
@@ -183,6 +221,12 @@ const Welcome: React.FC<WelcomeProps> = ({ children }) => {
   };
 
   const handleLogout = async () => {
+    if (shouldUseMock() || !hasRealSession()) {
+      clearMockSession();
+      navigate('/login');
+      return;
+    }
+
     const token = localStorage.getItem('token');
     if (token) {
       try {
@@ -226,32 +270,6 @@ const Welcome: React.FC<WelcomeProps> = ({ children }) => {
 
   return (
     <Box sx={{ position: "relative", width: "100%", height: "100%" }}>
-      {/* Logout button */}
-      <Box
-        sx={{
-          position: "fixed",
-          top: 30,
-          right: 30,
-          zIndex: 1400,
-        }}
-      >
-        <Button
-          variant="contained"
-          color="info"
-          size="large"
-          onClick={handleLogout}
-          sx={{
-            px: 4,
-            py: 1.5,
-            fontSize: "1.1rem",
-            fontWeight: 600,
-            boxShadow: "0 4px 12px rgba(0, 0, 0, 0.4)",
-          }}
-        >
-          LOGOUT
-        </Button>
-      </Box>
-
       <Box sx={{ display: "flex" }}>
         {/* Left menu */}
         <Drawer
@@ -264,6 +282,8 @@ const Welcome: React.FC<WelcomeProps> = ({ children }) => {
               boxSizing: "border-box",
               backgroundColor: "#1a1a1aff",
               color: "#fff",
+              display: "flex",
+              flexDirection: "column",
             },
             "& .MuiListItemText-primary": {
               fontSize: "1rem",
@@ -281,27 +301,45 @@ const Welcome: React.FC<WelcomeProps> = ({ children }) => {
             </Typography>
           </Box>
 
-          <List>
-            {menuItems.map((item) => (
-              <ListItemButton
-                key={item.path}
+          <Box sx={{ display: "flex", flexDirection: "column", flexGrow: 1 }}>
+            <List sx={{ flexGrow: 1 }}>
+              {menuItems.map((item) => (
+                <ListItemButton
+                  key={item.path}
+                  sx={{
+                    py: 1,
+                    mb: 1,
+                    backgroundColor: location.pathname === item.path ? "rgba(255,255,255,0.1)" : "transparent",
+                    "&:hover": {
+                      backgroundColor: "rgba(255,255,255,0.15)",
+                    }
+                  }}
+                  onClick={() => navigate(item.path)}
+                >
+                  <ListItemIcon sx={{ color: "#fff" }}>
+                    {item.icon}
+                  </ListItemIcon>
+                  <ListItemText primary={item.text} />
+                </ListItemButton>
+              ))}
+            </List>
+
+            <Box sx={{ p: 2, borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+              <Button
+                variant="contained"
+                color="info"
+                fullWidth
+                onClick={handleLogout}
                 sx={{
-                  py: 1,
-                  mb: 1,
-                  backgroundColor: location.pathname === item.path ? "rgba(255,255,255,0.1)" : "transparent",
-                  "&:hover": {
-                    backgroundColor: "rgba(255,255,255,0.15)",
-                  }
+                  py: 1.25,
+                  fontWeight: 700,
+                  boxShadow: "0 4px 12px rgba(0, 0, 0, 0.3)",
                 }}
-                onClick={() => navigate(item.path)}
               >
-                <ListItemIcon sx={{ color: "#fff" }}>
-                  {item.icon}
-                </ListItemIcon>
-                <ListItemText primary={item.text} />
-              </ListItemButton>
-            ))}
-          </List>
+                LOGOUT
+              </Button>
+            </Box>
+          </Box>
         </Drawer>
 
         {/* Main page */}

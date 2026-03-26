@@ -4,6 +4,7 @@ import type { FC } from "react";
 import { TextField, Button, Typography, Alert, Box, Link } from "@mui/material";
 import { useNavigate, Link as RouterLink } from "react-router-dom";
 import api from "./request";
+import { ENABLE_MOCK, ensureMockSession, setMockCurrentRole } from "./mock";
 
 const Login: FC = () => {
   const [email, setEmail] = useState<string>("");
@@ -32,6 +33,14 @@ const Login: FC = () => {
         setErrorMsg(res.data.msg || "fail to log in");
       }
     } catch (err: any) {
+      if (!err?.response && ENABLE_MOCK) {
+        setErrorMsg("");
+        setMockCurrentRole(email.toLowerCase().includes("admin") ? "admin" : "user");
+        ensureMockSession();
+        navigate("/welcome");
+        return;
+      }
+
       setErrorMsg(err?.response?.data?.msg || "Server error");
     }
   }
