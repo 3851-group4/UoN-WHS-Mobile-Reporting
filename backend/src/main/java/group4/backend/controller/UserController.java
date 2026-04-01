@@ -66,6 +66,14 @@ public class UserController {
         return R.ok(user);
     }
 
+    // update current user info
+    @PostMapping("/update")
+    public R updateInfo(@RequestBody UserRegisterDto userRegisterDto, HttpServletRequest httpServletRequest) {
+        String token = httpServletRequest.getHeader("token");
+        UserInfoDto user = userService.updateInfo(token, userRegisterDto);
+        return R.ok(user);
+    }
+
     // admin get all user
     @AuthCheck(role = "admin")
     @GetMapping("/admin/viewAll")

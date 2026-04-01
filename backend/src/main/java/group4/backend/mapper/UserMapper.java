@@ -21,6 +21,8 @@ public interface UserMapper {
     @Select("select * from user where id = #{id}")
     User selectById(Long id);
 
+    int update(User user);
+
     @Select("select * from user")
     List<User> selectAll();
 }

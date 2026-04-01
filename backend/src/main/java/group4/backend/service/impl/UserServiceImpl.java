@@ -125,6 +125,83 @@ public class UserServiceImpl implements UserService {
         return userInfoDto;
     }
 
+    @Override
+    public UserInfoDto updateInfo(String token, UserRegisterDto userRegisterDto) {
+
+        if (token == null || token.isEmpty()) {
+            throw new RuntimeException("token expired");
+        }
+
+        String userJson = stringRedisTemplate.opsForValue().get(token);
+        if (userJson == null) {
+            throw new RuntimeException("token error");
+        }
+
+        if (userRegisterDto == null) {
+            throw new RuntimeException("required field error");
+        }
+
+        User currentUser = gson.fromJson(userJson, User.class);
+        User user = userMapper.selectById(currentUser.getId());
+        if (user == null) {
+            throw new RuntimeException("user not found");
+        }
+
+        boolean updated = false;
+
+        // update email
+        String email = userRegisterDto.getEmail();
+        if (email != null && !email.isBlank()) {
+            email = email.trim();
+            if (!email.equals(user.getEmail())) {
+                User userByEmail = userMapper.selectByEmail(email);
+                if (userByEmail != null && !userByEmail.getId().equals(user.getId())) {
+                    throw new RuntimeException("email exists");
+                }
+                user.setEmail(email);
+                updated = true;
+            }
+        }
+
+        // update password
+        String password = userRegisterDto.getPassword();
+        if (password != null && !password.isBlank()) {
+            BCryptPasswordEncoder bCryptPasswordEncoder = new BCryptPasswordEncoder();
+            user.setPassword(bCryptPasswordEncoder.encode(password));
+            updated = true;
+        }
+
+        // update name
+        String name = userRegisterDto.getName();
+        if (name != null && !name.isBlank()) {
+            name = name.trim();
+            if (!name.equals(user.getName())) {
+                user.setName(name);
+                updated = true;
+            }
+        }
+
+        if (!updated) {
+            throw new RuntimeException("no fields to update");
+        }
+
+        user.setUpdateTime(LocalDateTime.now());
+        userMapper.update(user);
+
+        // update user cache
+        String newJson = gson.toJson(user);
+        Long expire = stringRedisTemplate.getExpire(token, TimeUnit.SECONDS);
+        if (expire != null && expire > 0) {
+            stringRedisTemplate.opsForValue().set(token, newJson, expire, TimeUnit.SECONDS);
+        } else {
+            stringRedisTemplate.opsForValue().set(token, newJson, 30, TimeUnit.DAYS);
+        }
+
+        UserInfoDto userInfoDto = new UserInfoDto();
+        BeanUtils.copyProperties(user, userInfoDto);
+        return userInfoDto;
+    }
+
     // admin get all user
     @Override
     public List<UserInfoDto> getAllUsers() {

@@ -13,5 +13,7 @@ public interface UserService {
 
     UserInfoDto getInfo(String token);
 
+    UserInfoDto updateInfo(String token, UserRegisterDto userRegisterDto);
+
     List<UserInfoDto> getAllUsers();
 }
