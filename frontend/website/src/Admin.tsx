@@ -7,6 +7,9 @@ import {
   Alert,
   Paper,
   Grid,
+  Card,
+  CardContent,
+  Stack,
   Table,
   TableBody,
   TableCell,
@@ -15,6 +18,8 @@ import {
   TableRow,
   Avatar,
   Chip,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import PeopleIcon from '@mui/icons-material/People';
 import ReportIcon from '@mui/icons-material/Report';
@@ -38,6 +43,8 @@ interface IssueVo {
 
 const AdminPage: React.FC = () => {
   const navigate = useNavigate();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [users, setUsers] = useState<UserInfoDto[]>([]);
@@ -137,8 +144,17 @@ const AdminPage: React.FC = () => {
 
   return (
     <Box sx={{ p: 1 }}>
-      <Typography variant="h4" sx={{ mb: 3, fontWeight: 600, color: '#fff' }}>
+      <Typography
+        variant="h4"
+        sx={{ mb: 1, fontWeight: 700, color: '#fff', fontSize: { xs: '2.1rem', md: '3rem' } }}
+      >
         Admin Dashboard
+      </Typography>
+      <Typography
+        variant="body1"
+        sx={{ mb: 3, color: 'rgba(255,255,255,0.78)', maxWidth: 580, fontSize: { xs: '1rem', md: '1.05rem' } }}
+      >
+        Monitor platform activity, review team members, and keep an eye on reporting volume.
       </Typography>
 
       {/* Stats Cards */}
@@ -180,57 +196,98 @@ const AdminPage: React.FC = () => {
       </Grid>
 
       {/* User List */}
-      <Paper elevation={2} sx={{ p: 3, borderRadius: 2 }}>
+      <Paper elevation={2} sx={{ p: { xs: 2, md: 3 }, borderRadius: 3 }}>
         <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
           All Users ({stats.totalUsers})
         </Typography>
-        <TableContainer>
-          <Table>
-            <TableHead>
-              <TableRow sx={{ bgcolor: '#f5f5f5' }}>
-                <TableCell sx={{ fontWeight: 600 }}>ID</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>Name</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>Email</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>Role</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {users.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={4} align="center" sx={{ py: 4 }}>
-                    <Typography variant="body2" color="text.secondary">No users found.</Typography>
-                  </TableCell>
-                </TableRow>
-              ) : (
-                users.map((user) => (
-                  <TableRow key={user.id} sx={{ '&:hover': { bgcolor: '#f9f9f9' } }}>
-                    <TableCell>#{user.id}</TableCell>
-                    <TableCell>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Avatar sx={{ width: 32, height: 32, bgcolor: user.role === 'admin' ? '#d32f2f' : '#1976d2', fontSize: '0.875rem' }}>
-                          {user.role === 'admin'
-                            ? <AdminPanelSettingsIcon sx={{ fontSize: 18 }} />
-                            : <PersonIcon sx={{ fontSize: 18 }} />}
-                        </Avatar>
-                        <Typography variant="body2">{user.name}</Typography>
+        {isMobile ? (
+          users.length === 0 ? (
+            <Box sx={{ py: 4 }}>
+              <Typography variant="body2" color="text.secondary" align="center">No users found.</Typography>
+            </Box>
+          ) : (
+            <Stack spacing={1.5}>
+              {users.map((user) => (
+                <Card key={user.id} elevation={0} sx={{ borderRadius: 3, bgcolor: '#f8fafc', border: '1px solid #e5e7eb' }}>
+                  <CardContent sx={{ p: 2 }}>
+                    <Stack direction="row" spacing={1.5} alignItems="center">
+                      <Avatar sx={{ width: 42, height: 42, bgcolor: user.role === 'admin' ? '#d32f2f' : '#1976d2' }}>
+                        {user.role === 'admin'
+                          ? <AdminPanelSettingsIcon sx={{ fontSize: 20 }} />
+                          : <PersonIcon sx={{ fontSize: 20 }} />}
+                      </Avatar>
+                      <Box sx={{ minWidth: 0, flexGrow: 1 }}>
+                        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                          User #{user.id}
+                        </Typography>
+                        <Typography variant="subtitle1" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
+                          {user.name}
+                        </Typography>
                       </Box>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2">{user.email}</Typography>
-                    </TableCell>
-                    <TableCell>
                       <Chip
                         label={user.role === 'admin' ? 'Admin' : 'User'}
                         color={user.role === 'admin' ? 'error' : 'primary'}
                         size="small"
                       />
+                    </Stack>
+                    <Box sx={{ mt: 1.5, px: 1.5, py: 1.25, borderRadius: 2, bgcolor: '#fff' }}>
+                      <Typography variant="caption" color="text.secondary">Email</Typography>
+                      <Typography variant="body2" sx={{ wordBreak: 'break-word' }}>{user.email}</Typography>
+                    </Box>
+                  </CardContent>
+                </Card>
+              ))}
+            </Stack>
+          )
+        ) : (
+          <TableContainer>
+            <Table>
+              <TableHead>
+                <TableRow sx={{ bgcolor: '#f5f5f5' }}>
+                  <TableCell sx={{ fontWeight: 600 }}>ID</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Name</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Email</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Role</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {users.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={4} align="center" sx={{ py: 4 }}>
+                      <Typography variant="body2" color="text.secondary">No users found.</Typography>
                     </TableCell>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
+                ) : (
+                  users.map((user) => (
+                    <TableRow key={user.id} sx={{ '&:hover': { bgcolor: '#f9f9f9' } }}>
+                      <TableCell>#{user.id}</TableCell>
+                      <TableCell>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <Avatar sx={{ width: 32, height: 32, bgcolor: user.role === 'admin' ? '#d32f2f' : '#1976d2', fontSize: '0.875rem' }}>
+                            {user.role === 'admin'
+                              ? <AdminPanelSettingsIcon sx={{ fontSize: 18 }} />
+                              : <PersonIcon sx={{ fontSize: 18 }} />}
+                          </Avatar>
+                          <Typography variant="body2">{user.name}</Typography>
+                        </Box>
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="body2">{user.email}</Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          label={user.role === 'admin' ? 'Admin' : 'User'}
+                          color={user.role === 'admin' ? 'error' : 'primary'}
+                          size="small"
+                        />
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        )}
       </Paper>
     </Box>
   );

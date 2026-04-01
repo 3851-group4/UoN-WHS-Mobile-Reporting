@@ -4,7 +4,7 @@ import type { FC } from "react";
 import { TextField, Button, Typography, Alert, Box, Link } from "@mui/material";
 import { useNavigate, Link as RouterLink } from "react-router-dom";
 import api from "./request";
-import { ENABLE_MOCK, ensureMockSession, setMockCurrentRole } from "./mock";
+import { clearMockSession, ENABLE_MOCK, ensureMockSession, setMockCurrentRole } from "./mock";
 
 const Login: FC = () => {
   const [email, setEmail] = useState<string>("");
@@ -19,6 +19,10 @@ const Login: FC = () => {
       setErrorMsg("Email or password cannot be empty");
       return;
     }
+
+    // Starting a new login attempt should discard any previous session
+    // so a failed login cannot fall back to the last logged-in user.
+    clearMockSession();
 
     try {
       const res = await api.post("/user/login", { email, password });
