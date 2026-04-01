@@ -13,8 +13,6 @@ import {
   Card,
   CardContent,
   Avatar,
-  Switch,
-  FormControlLabel,
 } from "@mui/material";
 import HomeIcon from "@mui/icons-material/Home";
 import AssignmentIcon from "@mui/icons-material/Assignment";
@@ -132,16 +130,12 @@ const HomePage: React.FC = () => {
   );
 };
 
-interface WelcomeProps {
-  children?: React.ReactNode;
-}
-
-const Welcome: React.FC<WelcomeProps> = ({ children }) => {
+const Welcome: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
   // 🧪 测试模式：用于切换角色
-  const [testMode, setTestMode] = useState(true);
+  const [testMode] = useState(true);
   const [mockRole, setMockRole] = useState<'admin' | 'user'>('user');
   const [userRole, setUserRole] = useState<'admin' | 'user'>('user');
 
