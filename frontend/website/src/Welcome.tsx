@@ -2,6 +2,9 @@ import React, { useState, useEffect } from "react";
 import {
   Box,
   Drawer,
+  AppBar,
+  Toolbar,
+  IconButton,
   List,
   ListItemButton,
   ListItemIcon,
@@ -14,11 +17,15 @@ import {
   CardContent,
   Avatar,
   CircularProgress,
+  Divider,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
 import HomeIcon from "@mui/icons-material/Home";
 import AssignmentIcon from "@mui/icons-material/Assignment";
 import PersonIcon from "@mui/icons-material/Person";
 import ListAltIcon from "@mui/icons-material/ListAlt";
+import MenuIcon from "@mui/icons-material/Menu";
 import { useNavigate, useLocation, Routes, Route } from "react-router-dom";
 import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
 import SecurityIcon from "@mui/icons-material/Security";
@@ -166,9 +173,12 @@ const getMockRoleFromUrl = (pathname: string, search: string): "admin" | "user" 
 const Welcome: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
 
   const [userRole, setUserRole] = useState<'admin' | 'user' | null>(null);
   const [loading, setLoading] = useState(true);
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
 
   useEffect(() => {
     fetchUserRole();
@@ -242,6 +252,13 @@ const Welcome: React.FC = () => {
     navigate('/login');
   };
 
+  const handleNavigate = (path: string) => {
+    navigate(path);
+    if (isMobile) {
+      setMobileDrawerOpen(false);
+    }
+  };
+
   const getMenuItems = () => {
     if (userRole === 'admin') {
       return [
@@ -267,18 +284,101 @@ const Welcome: React.FC = () => {
   }
 
   const menuItems = getMenuItems();
+  const drawerContent = (
+    <>
+      <Box sx={{ p: 2.5, borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+        <Typography variant="subtitle2" sx={{ opacity: 0.7, letterSpacing: 0.6 }}>
+          Role
+        </Typography>
+        <Typography variant="h6" sx={{ fontWeight: 700, textTransform: 'uppercase', mt: 0.5 }}>
+          {userRole}
+        </Typography>
+      </Box>
+
+      <Box sx={{ display: "flex", flexDirection: "column", flexGrow: 1, minHeight: 0 }}>
+        <List sx={{ flexGrow: 1, px: 1.5, py: 2 }}>
+          {menuItems.map((item) => (
+            <ListItemButton
+              key={item.path}
+              sx={{
+                py: 1.2,
+                px: 1.5,
+                mb: 0.75,
+                borderRadius: 2,
+                backgroundColor: location.pathname === item.path ? "rgba(255,255,255,0.12)" : "transparent",
+                "&:hover": {
+                  backgroundColor: "rgba(255,255,255,0.15)",
+                }
+              }}
+              onClick={() => handleNavigate(item.path)}
+            >
+              <ListItemIcon sx={{ color: "#fff", minWidth: 40 }}>
+                {item.icon}
+              </ListItemIcon>
+              <ListItemText primary={item.text} />
+            </ListItemButton>
+          ))}
+        </List>
+
+        <Divider sx={{ borderColor: "rgba(255,255,255,0.1)" }} />
+        <Box sx={{ p: 2 }}>
+          <Button
+            variant="contained"
+            color="info"
+            fullWidth
+            onClick={handleLogout}
+            sx={{
+              py: 1.25,
+              fontWeight: 700,
+              boxShadow: "0 4px 12px rgba(0, 0, 0, 0.3)",
+            }}
+          >
+            LOGOUT
+          </Button>
+        </Box>
+      </Box>
+    </>
+  );
 
   return (
-    <Box sx={{ position: "relative", width: "100%", height: "100%" }}>
-      <Box sx={{ display: "flex" }}>
-        {/* Left menu */}
-        <Drawer
-          variant="permanent"
+    <Box sx={{ position: "relative", width: "100%", minHeight: "100vh" }}>
+      {isMobile && (
+        <AppBar
+          position="fixed"
+          elevation={0}
           sx={{
-            width: drawerWidth,
+            bgcolor: "rgba(14, 19, 29, 0.92)",
+            backdropFilter: "blur(10px)",
+            borderBottom: "1px solid rgba(255,255,255,0.08)",
+          }}
+        >
+          <Toolbar sx={{ minHeight: 64 }}>
+            <IconButton edge="start" color="inherit" onClick={() => setMobileDrawerOpen(true)} sx={{ mr: 1 }}>
+              <MenuIcon />
+            </IconButton>
+            <Box>
+              <Typography variant="subtitle2" sx={{ opacity: 0.7, lineHeight: 1.1 }}>
+                UON Safety
+              </Typography>
+              <Typography variant="h6" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
+                {userRole === "admin" ? "Admin Portal" : "User Portal"}
+              </Typography>
+            </Box>
+          </Toolbar>
+        </AppBar>
+      )}
+
+      <Box sx={{ display: "flex", minHeight: "100vh" }}>
+        <Drawer
+          variant={isMobile ? "temporary" : "permanent"}
+          open={isMobile ? mobileDrawerOpen : true}
+          onClose={() => setMobileDrawerOpen(false)}
+          ModalProps={{ keepMounted: true }}
+          sx={{
+            width: isMobile ? 260 : drawerWidth,
             flexShrink: 0,
             "& .MuiDrawer-paper": {
-              width: drawerWidth,
+              width: isMobile ? 260 : drawerWidth,
               boxSizing: "border-box",
               backgroundColor: "#1a1a1aff",
               color: "#fff",
@@ -291,64 +391,16 @@ const Welcome: React.FC = () => {
             },
           }}
         >
-          {/* Role */}
-          <Box sx={{ p: 2, borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-            <Typography variant="subtitle2" sx={{ opacity: 0.7 }}>
-              Role
-            </Typography>
-            <Typography variant="h6" sx={{ fontWeight: 600, textTransform: 'uppercase' }}>
-              {userRole}
-            </Typography>
-          </Box>
-
-          <Box sx={{ display: "flex", flexDirection: "column", flexGrow: 1 }}>
-            <List sx={{ flexGrow: 1 }}>
-              {menuItems.map((item) => (
-                <ListItemButton
-                  key={item.path}
-                  sx={{
-                    py: 1,
-                    mb: 1,
-                    backgroundColor: location.pathname === item.path ? "rgba(255,255,255,0.1)" : "transparent",
-                    "&:hover": {
-                      backgroundColor: "rgba(255,255,255,0.15)",
-                    }
-                  }}
-                  onClick={() => navigate(item.path)}
-                >
-                  <ListItemIcon sx={{ color: "#fff" }}>
-                    {item.icon}
-                  </ListItemIcon>
-                  <ListItemText primary={item.text} />
-                </ListItemButton>
-              ))}
-            </List>
-
-            <Box sx={{ p: 2, borderTop: '1px solid rgba(255,255,255,0.1)' }}>
-              <Button
-                variant="contained"
-                color="info"
-                fullWidth
-                onClick={handleLogout}
-                sx={{
-                  py: 1.25,
-                  fontWeight: 700,
-                  boxShadow: "0 4px 12px rgba(0, 0, 0, 0.3)",
-                }}
-              >
-                LOGOUT
-              </Button>
-            </Box>
-          </Box>
+          {drawerContent}
         </Drawer>
 
-        {/* Main page */}
         <Box
           component="main"
           sx={{
             flexGrow: 1,
-            p: 3,
-            width: `calc(100% - ${drawerWidth}px)`,
+            p: { xs: 2, sm: 3 },
+            pt: { xs: 10, md: 3 },
+            width: { xs: "100%", md: `calc(100% - ${drawerWidth}px)` },
             minHeight: "100vh",
           }}
         >
