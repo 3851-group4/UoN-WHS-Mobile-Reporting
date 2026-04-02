@@ -37,7 +37,12 @@ const Login: FC = () => {
         setErrorMsg(res.data.msg || "fail to log in");
       }
     } catch (err: any) {
-      if (!err?.response && ENABLE_MOCK) {
+      const isNetworkFailure =
+        ENABLE_MOCK &&
+        err?.isAxiosError === true &&
+        !err?.response;
+
+      if (isNetworkFailure) {
         setErrorMsg("");
         setMockCurrentRole(email.toLowerCase().includes("admin") ? "admin" : "user");
         ensureMockSession();
@@ -45,7 +50,7 @@ const Login: FC = () => {
         return;
       }
 
-      setErrorMsg(err?.response?.data?.msg || "Server error");
+      setErrorMsg(err?.response?.data?.msg || err?.msg || "Server error");
     }
   }
 
