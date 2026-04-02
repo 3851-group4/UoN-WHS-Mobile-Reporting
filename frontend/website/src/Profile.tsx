@@ -9,12 +9,21 @@ import {
   CircularProgress,
   Alert,
   Grid,
+  TextField,
+  Button,
+  IconButton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from "@mui/material";
 import PersonIcon from "@mui/icons-material/Person";
 import EmailIcon from "@mui/icons-material/Email";
 import BadgeIcon from "@mui/icons-material/Badge";
 import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
 import FingerprintIcon from "@mui/icons-material/Fingerprint";
+import EditIcon from "@mui/icons-material/Edit";
+import CloseIcon from "@mui/icons-material/Close";
 import { getMockCurrentUser, shouldUseMock } from "./mock";
 
 interface UserInfo {
@@ -24,10 +33,16 @@ interface UserInfo {
   role: string;
 }
 
+const MOCK_PROFILE_KEY_PREFIX = "mock-profile-email-";
+
 const Profile: React.FC = () => {
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
+  const [emailDraft, setEmailDraft] = useState("");
+  const [emailDialogOpen, setEmailDialogOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   useEffect(() => {
     fetchUserInfo();
@@ -35,7 +50,14 @@ const Profile: React.FC = () => {
 
   const fetchUserInfo = async () => {
     if (shouldUseMock()) {
-      setUserInfo(getMockCurrentUser());
+      const mockUser = getMockCurrentUser();
+      const savedEmail = window.localStorage.getItem(`${MOCK_PROFILE_KEY_PREFIX}${mockUser.id}`);
+      const nextUser = {
+        ...mockUser,
+        email: savedEmail || mockUser.email,
+      };
+      setUserInfo(nextUser);
+      setEmailDraft(nextUser.email);
       setLoading(false);
       return;
     }
@@ -60,6 +82,7 @@ const Profile: React.FC = () => {
 
       if (result.code === 200 && result.data) {
         setUserInfo(result.data);
+        setEmailDraft(result.data.email || "");
       } else {
         setError(result.msg || "Failed to fetch user information.");
       }
@@ -68,6 +91,70 @@ const Profile: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSaveEmail = async () => {
+    if (!userInfo) {
+      return;
+    }
+
+    const trimmedEmail = emailDraft.trim();
+    if (!trimmedEmail) {
+      setError("Email address cannot be empty.");
+      return;
+    }
+
+    setSaving(true);
+    setError(null);
+    setSuccessMessage(null);
+
+    if (shouldUseMock()) {
+      window.localStorage.setItem(`${MOCK_PROFILE_KEY_PREFIX}${userInfo.id}`, trimmedEmail);
+      setUserInfo({ ...userInfo, email: trimmedEmail });
+      setSuccessMessage("Email address updated.");
+      setEmailDialogOpen(false);
+      setSaving(false);
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        throw new Error("Not authenticated. Please log in again.");
+      }
+
+      const response = await fetch("http://localhost:8000/api/user/update", {
+        method: "POST",
+        headers: {
+          token,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: trimmedEmail,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (result.code === 200 && result.data) {
+        setUserInfo(result.data);
+        setEmailDraft(result.data.email || trimmedEmail);
+        setSuccessMessage("Email address updated.");
+        setEmailDialogOpen(false);
+      } else {
+        setError(result.msg || "Failed to update email address.");
+      }
+    } catch (err: any) {
+      setError(err?.message || "Failed to connect to the server. Please try again.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEmailDraft(userInfo?.email || "");
+    setEmailDialogOpen(false);
+    setError(null);
   };
 
   const getInitials = (name: string) => {
@@ -163,6 +250,11 @@ const Profile: React.FC = () => {
           Account Details
         </Typography>
         <Divider sx={{ mb: 3 }} />
+        {successMessage && (
+          <Alert severity="success" sx={{ mb: 3 }} onClose={() => setSuccessMessage(null)}>
+            {successMessage}
+          </Alert>
+        )}
         <Grid container spacing={3}>
           {detailFields.map((field) => (
             <Grid item xs={12} sm={6} key={field.label}>
@@ -176,7 +268,7 @@ const Profile: React.FC = () => {
                 >
                   {field.icon}
                 </Avatar>
-                <Box>
+                <Box sx={{ flexGrow: 1 }}>
                   <Typography variant="caption" color="text.secondary">
                     {field.label}
                   </Typography>
@@ -184,11 +276,58 @@ const Profile: React.FC = () => {
                     {field.value}
                   </Typography>
                 </Box>
+                {field.label === "Email Address" && (
+                  <IconButton
+                    size="small"
+                    color="primary"
+                    onClick={() => {
+                      setEmailDraft(userInfo?.email || "");
+                      setSuccessMessage(null);
+                      setError(null);
+                      setEmailDialogOpen(true);
+                    }}
+                  >
+                    <EditIcon fontSize="small" />
+                  </IconButton>
+                )}
               </Box>
             </Grid>
           ))}
         </Grid>
       </Paper>
+
+      <Dialog open={emailDialogOpen} onClose={handleCancelEdit} maxWidth="sm" fullWidth>
+        <DialogTitle sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <Typography variant="h6">Edit Email Address</Typography>
+          <IconButton onClick={handleCancelEdit} size="small">
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent dividers>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Update the email used for your account notifications and login.
+          </Typography>
+          <TextField
+            fullWidth
+            label="Email Address"
+            type="email"
+            value={emailDraft}
+            onChange={(e) => setEmailDraft(e.target.value)}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCancelEdit} disabled={saving}>
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleSaveEmail}
+            disabled={saving || !emailDraft.trim() || emailDraft.trim() === userInfo?.email}
+          >
+            {saving ? "Saving..." : "Save"}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };
