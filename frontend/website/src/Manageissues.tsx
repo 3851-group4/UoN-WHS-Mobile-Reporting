@@ -5,11 +5,12 @@ import CloseIcon from '@mui/icons-material/Close';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
 import EditIcon from '@mui/icons-material/Edit';
-import { getMockIssues, saveMockIssues, shouldUseMock } from './mock';
+import { DEFAULT_MOCK_ADMIN, DEFAULT_MOCK_USER, getMockIssues, saveMockIssues, shouldUseMock } from './mock';
 
 const API_BASE = 'http://localhost:8000';
 
 interface IssueVo { id: number; userId: number; title: string; brief: string; description: string; location: string; status: string; witnessInfo: string; happenTime: string; urls: string[]; }
+interface UserInfoDto { id: number; name: string; email: string; role: string; }
 type BackendStatus = 'pending' | 'processing' | 'completed';
 
 const STATUS_LABELS: Record<string, string> = { pending: 'Pending', processing: 'In Progress', completed: 'Completed' };
@@ -20,6 +21,7 @@ const ManageIssues: React.FC = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [issues, setIssues] = useState<IssueVo[]>([]);
+  const [users, setUsers] = useState<UserInfoDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
@@ -38,14 +40,29 @@ const ManageIssues: React.FC = () => {
     setError('');
     if (shouldUseMock()) {
       setIssues(getMockIssues());
+      setUsers([
+        DEFAULT_MOCK_ADMIN,
+        DEFAULT_MOCK_USER,
+        { id: 1002, name: 'Taylor Student', email: 'taylor.student@uon.edu.au', role: 'user' },
+        { id: 1003, name: 'Jordan Student', email: 'jordan.student@uon.edu.au', role: 'user' },
+      ]);
       setLoading(false);
       return;
     }
     try {
-      const res = await fetch(`${API_BASE}/api/issue/admin/viewAll`, { headers: { token: getToken() } });
-      const result = await res.json();
-      if (result.code === 200) setIssues(result.data || []);
-      else setError(result.msg || 'Failed to load issues.');
+      const [issuesRes, usersRes] = await Promise.all([
+        fetch(`${API_BASE}/api/issue/admin/viewAll`, { headers: { token: getToken() } }),
+        fetch(`${API_BASE}/api/user/admin/viewAll`, { headers: { token: getToken() } }),
+      ]);
+      const issuesResult = await issuesRes.json();
+      const usersResult = await usersRes.json();
+      if (issuesResult.code === 200) setIssues(issuesResult.data || []);
+      else {
+        setError(issuesResult.msg || 'Failed to load issues.');
+        return;
+      }
+      if (usersResult.code === 200) setUsers(usersResult.data || []);
+      else setError(usersResult.msg || 'Failed to load users.');
     } catch {
       setError('Failed to connect to the server.');
     } finally {
@@ -87,6 +104,7 @@ const ManageIssues: React.FC = () => {
 
   const filteredIssues = statusFilter === 'All' ? issues : issues.filter((i) => i.status === statusFilter);
   const stats = { total: issues.length, pending: issues.filter((i) => i.status === 'pending').length, processing: issues.filter((i) => i.status === 'processing').length, completed: issues.filter((i) => i.status === 'completed').length };
+  const getSubmittedByName = (userId: number) => users.find((user) => user.id === userId)?.name || `User #${userId}`;
 
   if (loading) return <Box sx={{ display: 'flex', justifyContent: 'center', mt: 8 }}><CircularProgress /></Box>;
 
@@ -136,7 +154,7 @@ const ManageIssues: React.FC = () => {
                       <Typography variant="caption" color="text.secondary">Submitted By</Typography>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
                         <Avatar sx={{ width: 28, height: 28, bgcolor: '#1976d2', fontSize: '0.8rem' }}>{String(issue.userId)}</Avatar>
-                        <Typography variant="body2">User #{issue.userId}</Typography>
+                        <Typography variant="body2">{getSubmittedByName(issue.userId)}</Typography>
                       </Box>
                     </Grid>
                     <Grid item xs={12}><Typography variant="caption" color="text.secondary">Date & Time</Typography><Typography variant="body2">{formatDateTime(issue.happenTime)}</Typography></Grid>
@@ -167,7 +185,7 @@ const ManageIssues: React.FC = () => {
                     <TableCell><Typography variant="body2" sx={{ fontWeight: 600 }}>#{issue.id}</Typography></TableCell>
                     <TableCell sx={{ maxWidth: 200 }}><Typography variant="body2" noWrap>{issue.title}</Typography></TableCell>
                     <TableCell sx={{ maxWidth: 150 }}><Typography variant="body2" noWrap>{issue.location}</Typography></TableCell>
-                    <TableCell><Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}><Avatar sx={{ width: 32, height: 32, bgcolor: '#1976d2', fontSize: '0.875rem' }}>{String(issue.userId)}</Avatar><Typography variant="body2">User #{issue.userId}</Typography></Box></TableCell>
+                    <TableCell><Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}><Avatar sx={{ width: 32, height: 32, bgcolor: '#1976d2', fontSize: '0.875rem' }}>{String(issue.userId)}</Avatar><Typography variant="body2">{getSubmittedByName(issue.userId)}</Typography></Box></TableCell>
                     <TableCell><Chip label={STATUS_LABELS[issue.status] ?? issue.status} color={statusColor(issue.status)} size="small" /></TableCell>
                     <TableCell><Typography variant="body2">{formatDateTime(issue.happenTime)}</Typography></TableCell>
                     <TableCell><Chip label={`${(issue.urls || []).length} photo${(issue.urls || []).length !== 1 ? 's' : ''}`} size="small" color={(issue.urls || []).length > 0 ? 'primary' : 'default'} variant="outlined" /></TableCell>
@@ -192,7 +210,7 @@ const ManageIssues: React.FC = () => {
               <Grid item xs={12}><Typography variant="subtitle2" color="text.secondary">Title</Typography><Typography variant="h6">{selectedIssue.title}</Typography></Grid>
               <Grid item xs={12} sm={6}><Typography variant="subtitle2" color="text.secondary">Location</Typography><Typography variant="body1">{selectedIssue.location || 'N/A'}</Typography></Grid>
               <Grid item xs={12} sm={6}><Typography variant="subtitle2" color="text.secondary">Status</Typography><Chip label={STATUS_LABELS[selectedIssue.status] ?? selectedIssue.status} color={statusColor(selectedIssue.status)} size="small" /></Grid>
-              <Grid item xs={12} sm={6}><Typography variant="subtitle2" color="text.secondary">Submitted By</Typography><Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}><Avatar sx={{ width: 32, height: 32, bgcolor: '#1976d2' }}>{String(selectedIssue.userId)}</Avatar><Typography variant="body1">User #{selectedIssue.userId}</Typography></Box></Grid>
+              <Grid item xs={12} sm={6}><Typography variant="subtitle2" color="text.secondary">Submitted By</Typography><Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}><Avatar sx={{ width: 32, height: 32, bgcolor: '#1976d2' }}>{String(selectedIssue.userId)}</Avatar><Typography variant="body1">{getSubmittedByName(selectedIssue.userId)}</Typography></Box></Grid>
               <Grid item xs={12} sm={6}><Typography variant="subtitle2" color="text.secondary">Date & Time</Typography><Typography variant="body1">{formatDateTime(selectedIssue.happenTime)}</Typography></Grid>
               {selectedIssue.brief && <Grid item xs={12}><Typography variant="subtitle2" color="text.secondary">Brief</Typography><Typography variant="body1">{selectedIssue.brief}</Typography></Grid>}
               <Grid item xs={12}><Typography variant="subtitle2" color="text.secondary">Description</Typography><Paper sx={{ p: 2, mt: 1, bgcolor: '#f5f5f5' }}><Typography variant="body1" sx={{ whiteSpace: 'pre-wrap' }}>{selectedIssue.description || 'N/A'}</Typography></Paper></Grid>
@@ -215,7 +233,7 @@ const ManageIssues: React.FC = () => {
               <Paper sx={{ p: 2, mb: 3, bgcolor: '#f5f5f5' }}>
                 <Typography variant="subtitle2" color="text.secondary">Report:</Typography>
                 <Typography variant="body1" sx={{ fontWeight: 500 }}>#{selectedIssue.id} - {selectedIssue.title}</Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>Submitted by: User #{selectedIssue.userId}</Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>Submitted by: {getSubmittedByName(selectedIssue.userId)}</Typography>
               </Paper>
               <FormControl fullWidth>
                 <InputLabel>New Status</InputLabel>
