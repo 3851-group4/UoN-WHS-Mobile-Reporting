@@ -7,6 +7,7 @@ import group4.backend.entity.Issue;
 import group4.backend.entity.User;
 import group4.backend.service.IssueService;
 import group4.backend.service.MinioService;
+import group4.backend.util.PageResult;
 import group4.backend.util.R;
 import group4.backend.vo.IssueVo;
 import jakarta.servlet.http.HttpServletRequest;
@@ -93,6 +94,16 @@ public class IssueController {
     public R viewAllIssues() {
         List<IssueVo> issueVoList = issueService.getAllIssues();
         return R.ok(issueVoList);
+    }
+
+    // admin query issues with pagination
+    @AuthCheck(role = "admin")
+    @GetMapping("/admin/page")
+    public R pageIssues(@RequestParam(required = false) String query,
+                        @RequestParam Integer page,
+                        @RequestParam Integer pageSize) {
+        PageResult<IssueVo> pageResult = issueService.pageIssuesForAdmin(query, page, pageSize);
+        return R.ok(pageResult);
     }
 
     // admin update issue status

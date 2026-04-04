@@ -32,6 +32,10 @@ public interface IssueMapper  {
     @Select("select * from issue")
     List<Issue> selectAll();
 
+    Long countByQuery(@Param("query") String query);
+
+    List<Issue> selectPageByQuery(@Param("query") String query, @Param("offset") Integer offset, @Param("pageSize") Integer pageSize);
+
     @Update("update issue set status=#{status}, update_time=#{updateTime} where id=#{id}")
     void updateStatus(@Param("id") Long id, @Param("status") String status, @Param("updateTime") LocalDateTime updateTime);
 }

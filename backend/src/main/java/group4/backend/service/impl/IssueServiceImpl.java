@@ -10,6 +10,7 @@ import group4.backend.mapper.IssuePictureMapper;
 import group4.backend.mapper.UserMapper;
 import group4.backend.service.EmailService;
 import group4.backend.service.IssueService;
+import group4.backend.util.PageResult;
 import group4.backend.vo.IssueVo;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -114,46 +115,42 @@ public class IssueServiceImpl implements IssueService {
 
         List<Issue> issues = issueMapper.selectByUserId(id);
 
-        // get issue pictures by issue id
-
-        List<IssueVo> issueVos = issues.stream().map((issue) -> {
-
-            List<IssuePicture> issuePictures = issuePictureMapper.selectByIssueId(issue.getId());
-
-            // get issue pictures url
-            List<String> urls = issuePictures.stream().map(IssuePicture::getUrl).toList();
-
-            IssueVo issueVo = new IssueVo();
-
-            BeanUtils.copyProperties(issue, issueVo);
-
-            issueVo.setUrls(urls);
-
-            return issueVo;
-
-        }).collect(Collectors.toList());
-
-        return issueVos;
+        return convertToIssueVos(issues);
     }
 
+    // admin get all issues
     @Override
     public List<IssueVo> getAllIssues() {
 
         // select all issues
         List<Issue> issues = issueMapper.selectAll();
 
-        // convert all issue to issueVo
-        List<IssueVo> issueVos = issues.stream().map((issue) -> {
-            List<IssuePicture> issuePictures = issuePictureMapper.selectByIssueId(issue.getId());
-            List<String> urls = issuePictures.stream().map(IssuePicture::getUrl).toList();
+        return convertToIssueVos(issues);
+    }
 
-            IssueVo issueVo = new IssueVo();
-            BeanUtils.copyProperties(issue, issueVo);
-            issueVo.setUrls(urls);
-            return issueVo;
-        }).collect(Collectors.toList());
+    @Override
+    public PageResult<IssueVo> pageIssuesForAdmin(String query, Integer page, Integer pageSize) {
 
-        return issueVos;
+        if (page == null || page < 1) {
+            throw new RuntimeException("page error");
+        }
+
+        if (pageSize == null || pageSize < 1) {
+            throw new RuntimeException("pageSize error");
+        }
+
+        // count total issue and total pages
+        Long total = issueMapper.countByQuery(query);
+        long totalPages = total == 0 ? 0 : (total + pageSize - 1L) / pageSize;
+
+        List<IssueVo> records = List.of();
+        if (total > 0) {
+            int offset = (page - 1) * pageSize;
+            List<Issue> issues = issueMapper.selectPageByQuery(query, offset, pageSize);
+            records = convertToIssueVos(issues);
+        }
+
+        return new PageResult<>(page, pageSize, total, totalPages, records);
     }
 
     @Override
@@ -182,4 +179,17 @@ public class IssueServiceImpl implements IssueService {
             emailService.sendIssueStatusChangeEmail(user.getEmail(), issue.getTitle(), oldStatus, status);
         }
     }
+
+    private List<IssueVo> convertToIssueVos(List<Issue> issues) {
+        return issues.stream().map(issue -> {
+            List<IssuePicture> issuePictures = issuePictureMapper.selectByIssueId(issue.getId());
+            List<String> urls = issuePictures.stream().map(IssuePicture::getUrl).toList();
+
+            IssueVo issueVo = new IssueVo();
+            BeanUtils.copyProperties(issue, issueVo);
+            issueVo.setUrls(urls);
+            return issueVo;
+        }).collect(Collectors.toList());
+    }
+
 }

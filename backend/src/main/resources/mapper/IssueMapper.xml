@@ -5,6 +5,36 @@
 
 <mapper namespace="group4.backend.mapper.IssueMapper">
 
+    <sql id="issueQueryCondition">
+        <if test="query != null and query != ''">
+            (
+            title like concat('%', #{query}, '%')
+            or brief like concat('%', #{query}, '%')
+            or description like concat('%', #{query}, '%')
+            or location like concat('%', #{query}, '%')
+            or status like concat('%', #{query}, '%')
+            )
+        </if>
+    </sql>
+
+    <select id="countByQuery" resultType="java.lang.Long">
+        select count(*)
+        from issue
+        <where>
+            <include refid="issueQueryCondition"/>
+        </where>
+    </select>
+
+    <select id="selectPageByQuery" resultType="group4.backend.entity.Issue">
+        select *
+        from issue
+        <where>
+            <include refid="issueQueryCondition"/>
+        </where>
+        order by create_time desc, id desc
+        limit #{offset}, #{pageSize}
+    </select>
+
 
     <update id="update" parameterType="group4.backend.entity.Issue">
 
