@@ -19,9 +19,11 @@ import {
 import {
   Send as SendIcon,
   Clear as ClearIcon,
-  AddPhotoAlternate as AddPhotoAlternateIcon,
+  AttachFile as AttachFileIcon,
   Delete as DeleteIcon,
+  InsertDriveFile as InsertDriveFileIcon,
 } from "@mui/icons-material";
+import { getAttachmentName, isImageFile } from "./attachments";
 import { createMockIssue, getMockIssues, saveMockIssues, shouldUseMock } from "./mock";
 import { uploadIssueImages } from "./issueImages";
 
@@ -54,7 +56,7 @@ const emptyForm: ReportForm = {
   witnessInfo: "",
 };
 
-interface SelectedImage {
+interface SelectedAttachment {
   file: File;
   preview: string;
 }
@@ -64,7 +66,7 @@ const Reporting: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
-  const [selectedImages, setSelectedImages] = useState<SelectedImage[]>([]);
+  const [selectedAttachments, setSelectedAttachments] = useState<SelectedAttachment[]>([]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -81,29 +83,29 @@ const Reporting: React.FC = () => {
 
   const resetForm = () => {
     setFormData(emptyForm);
-    selectedImages.forEach((image) => URL.revokeObjectURL(image.preview));
-    setSelectedImages([]);
+    selectedAttachments.forEach((attachment) => URL.revokeObjectURL(attachment.preview));
+    setSelectedAttachments([]);
   };
 
-  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAttachmentSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) {
       return;
     }
 
-    const nextImages = files.map((file) => ({
+    const nextAttachments = files.map((file) => ({
       file,
       preview: URL.createObjectURL(file),
     }));
-    setSelectedImages((prev) => [...prev, ...nextImages]);
+    setSelectedAttachments((prev) => [...prev, ...nextAttachments]);
     e.target.value = "";
   };
 
-  const handleRemoveImage = (index: number) => {
-    setSelectedImages((prev) => {
-      const image = prev[index];
-      if (image) {
-        URL.revokeObjectURL(image.preview);
+  const handleRemoveAttachment = (index: number) => {
+    setSelectedAttachments((prev) => {
+      const attachment = prev[index];
+      if (attachment) {
+        URL.revokeObjectURL(attachment.preview);
       }
       return prev.filter((_, idx) => idx !== index);
     });
@@ -120,7 +122,7 @@ const Reporting: React.FC = () => {
         const title = formData.issueType
           ? `[${formData.issueType}] ${formData.brief}`
           : formData.brief;
-        const urls = selectedImages.map((image) => image.preview);
+        const urls = selectedAttachments.map((attachment) => attachment.preview);
 
         const newIssue = createMockIssue({
           title,
@@ -151,7 +153,7 @@ const Reporting: React.FC = () => {
         ? `[${formData.issueType}] ${formData.brief}`
         : formData.brief;
       const urls = await uploadIssueImages(
-        selectedImages.map((image) => image.file),
+        selectedAttachments.map((attachment) => attachment.file),
         token
       );
 
@@ -368,39 +370,63 @@ const Reporting: React.FC = () => {
                 <Button
                   component="label"
                   variant="outlined"
-                  startIcon={<AddPhotoAlternateIcon />}
+                  startIcon={<AttachFileIcon />}
                 >
-                  Add Images
+                  Add Files
                   <input
                     hidden
                     type="file"
-                    accept="image/*"
                     multiple
-                    onChange={handleImageSelect}
+                    onChange={handleAttachmentSelect}
                   />
                 </Button>
                 <Typography variant="body2" color="text.secondary">
-                  Add one or more photos to support this report
+                  Add one or more supporting files to this report
                 </Typography>
               </Box>
             </Grid>
 
-            {selectedImages.length > 0 && (
+            {selectedAttachments.length > 0 && (
               <Grid item xs={12}>
                 <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 600 }}>
-                  Selected Images ({selectedImages.length})
+                  Selected Files ({selectedAttachments.length})
                 </Typography>
                 <ImageList cols={3} gap={12}>
-                  {selectedImages.map((image, index) => (
-                    <ImageListItem key={`${image.file.name}-${index}`} sx={{ overflow: "hidden", borderRadius: 2 }}>
-                      <img
-                        src={image.preview}
-                        alt={image.file.name}
-                        style={{ height: 150, objectFit: "cover" }}
-                      />
+                  {selectedAttachments.map((attachment, index) => (
+                    <ImageListItem key={`${attachment.file.name}-${index}`} sx={{ overflow: "hidden", borderRadius: 2 }}>
+                      {isImageFile(attachment.file) ? (
+                        <img
+                          src={attachment.preview}
+                          alt={attachment.file.name}
+                          style={{ height: 150, objectFit: "cover" }}
+                        />
+                      ) : (
+                        <Box
+                          sx={{
+                            height: 150,
+                            display: "flex",
+                            flexDirection: "column",
+                            justifyContent: "center",
+                            alignItems: "center",
+                            gap: 1,
+                            px: 2,
+                            textAlign: "center",
+                            bgcolor: "#f8fafc",
+                            border: "1px solid #e5e7eb",
+                          }}
+                        >
+                          <InsertDriveFileIcon sx={{ fontSize: 36, color: "#475569" }} />
+                          <Typography variant="body2" sx={{ fontWeight: 600, wordBreak: "break-word" }}>
+                            {getAttachmentName(attachment.file.name)}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            {attachment.file.type || "Unknown file type"}
+                          </Typography>
+                        </Box>
+                      )}
                       <IconButton
                         size="small"
-                        onClick={() => handleRemoveImage(index)}
+                        onClick={() => handleRemoveAttachment(index)}
                         sx={{
                           position: "absolute",
                           top: 8,

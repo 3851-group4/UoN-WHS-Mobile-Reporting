@@ -146,13 +146,13 @@ const AdminPage: React.FC = () => {
     <Box sx={{ p: 1 }}>
       <Typography
         variant="h4"
-        sx={{ mb: 1, fontWeight: 700, color: '#fff', fontSize: { xs: '2.1rem', md: '3rem' } }}
+        sx={{ mb: 1, fontWeight: 700, color: '#fff', fontSize: { xs: '2.45rem', md: '3rem' } }}
       >
         Admin Dashboard
       </Typography>
       <Typography
         variant="body1"
-        sx={{ mb: 3, color: 'rgba(255,255,255,0.78)', maxWidth: 580, fontSize: { xs: '1rem', md: '1.05rem' } }}
+        sx={{ mb: 3, color: 'rgba(255,255,255,0.78)', maxWidth: 580, fontSize: { xs: '1.1rem', md: '1.05rem' } }}
       >
         Monitor platform activity, review team members, and keep an eye on reporting volume.
       </Typography>
@@ -162,42 +162,42 @@ const AdminPage: React.FC = () => {
         <Grid item xs={12} sm={6} md={3}>
           <Paper sx={{ p: 3, textAlign: 'center', borderRadius: 2 }}>
             <PeopleIcon sx={{ fontSize: 36, color: '#1976d2', mb: 1 }} />
-            <Typography variant="h4" sx={{ fontWeight: 700, color: '#1976d2' }}>
+            <Typography variant="h4" sx={{ fontWeight: 700, color: '#1976d2', fontSize: { xs: '2.2rem', md: '2.125rem' } }}>
               {stats.totalUsers}
             </Typography>
-            <Typography variant="body2" color="text.secondary">Total Users</Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: '1rem', md: '0.875rem' } }}>Total Users</Typography>
           </Paper>
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
           <Paper sx={{ p: 3, textAlign: 'center', borderRadius: 2 }}>
             <ReportIcon sx={{ fontSize: 36, color: '#ed6c02', mb: 1 }} />
-            <Typography variant="h4" sx={{ fontWeight: 700, color: '#ed6c02' }}>
+            <Typography variant="h4" sx={{ fontWeight: 700, color: '#ed6c02', fontSize: { xs: '2.2rem', md: '2.125rem' } }}>
               {stats.totalIssues}
             </Typography>
-            <Typography variant="body2" color="text.secondary">Total Issues</Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: '1rem', md: '0.875rem' } }}>Total Issues</Typography>
           </Paper>
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
           <Paper sx={{ p: 3, textAlign: 'center', borderRadius: 2 }}>
-            <Typography variant="h4" sx={{ fontWeight: 700, color: '#f59e0b' }}>
+            <Typography variant="h4" sx={{ fontWeight: 700, color: '#f59e0b', fontSize: { xs: '2.2rem', md: '2.125rem' } }}>
               {stats.pendingIssues}
             </Typography>
-            <Typography variant="body2" color="text.secondary">Pending Issues</Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: '1rem', md: '0.875rem' } }}>Pending Issues</Typography>
           </Paper>
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
           <Paper sx={{ p: 3, textAlign: 'center', borderRadius: 2 }}>
-            <Typography variant="h4" sx={{ fontWeight: 700, color: '#2e7d32' }}>
+            <Typography variant="h4" sx={{ fontWeight: 700, color: '#2e7d32', fontSize: { xs: '2.2rem', md: '2.125rem' } }}>
               {stats.completedIssues}
             </Typography>
-            <Typography variant="body2" color="text.secondary">Completed Issues</Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: '1rem', md: '0.875rem' } }}>Completed Issues</Typography>
           </Paper>
         </Grid>
       </Grid>
 
       {/* User List */}
       <Paper elevation={2} sx={{ p: { xs: 2, md: 3 }, borderRadius: 3 }}>
-        <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
+        <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, fontSize: { xs: '1.4rem', md: '1.25rem' } }}>
           All Users ({stats.totalUsers})
         </Typography>
         {isMobile ? (
@@ -209,7 +209,7 @@ const AdminPage: React.FC = () => {
             <Stack spacing={1.5}>
               {users.map((user) => (
                 <Card key={user.id} elevation={0} sx={{ borderRadius: 3, bgcolor: '#f8fafc', border: '1px solid #e5e7eb' }}>
-                  <CardContent sx={{ p: 2 }}>
+                  <CardContent sx={{ p: 2.4 }}>
                     <Stack direction="row" spacing={1.5} alignItems="center">
                       <Avatar sx={{ width: 42, height: 42, bgcolor: user.role === 'admin' ? '#d32f2f' : '#1976d2' }}>
                         {user.role === 'admin'
@@ -217,10 +217,10 @@ const AdminPage: React.FC = () => {
                           : <PersonIcon sx={{ fontSize: 20 }} />}
                       </Avatar>
                       <Box sx={{ minWidth: 0, flexGrow: 1 }}>
-                        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                        <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '1rem' }}>
                           User #{user.id}
                         </Typography>
-                        <Typography variant="subtitle1" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
+                        <Typography variant="subtitle1" sx={{ fontWeight: 700, lineHeight: 1.2, fontSize: '1.25rem' }}>
                           {user.name}
                         </Typography>
                       </Box>
@@ -231,8 +231,8 @@ const AdminPage: React.FC = () => {
                       />
                     </Stack>
                     <Box sx={{ mt: 1.5, px: 1.5, py: 1.25, borderRadius: 2, bgcolor: '#fff' }}>
-                      <Typography variant="caption" color="text.secondary">Email</Typography>
-                      <Typography variant="body2" sx={{ wordBreak: 'break-word' }}>{user.email}</Typography>
+                      <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.92rem' }}>Email</Typography>
+                      <Typography variant="body2" sx={{ wordBreak: 'break-word', fontSize: '1rem' }}>{user.email}</Typography>
                     </Box>
                   </CardContent>
                 </Card>
