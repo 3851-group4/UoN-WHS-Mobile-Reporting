@@ -120,8 +120,8 @@ public class IssueController {
             throw new RuntimeException("file is empty");
         }
         String contentType = file.getContentType();
-        if (contentType == null || !contentType.startsWith("image/")) {
-            throw new RuntimeException("only image files are allowed");
+        if (contentType == null) {
+            throw new RuntimeException("not supported file");
         }
         String url = minioService.uploadFile(file);
         return R.ok(url);
