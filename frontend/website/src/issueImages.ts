@@ -26,12 +26,12 @@ export const uploadIssueImages = async (
       });
 
       if (!response.ok) {
-        throw new Error("Failed to upload image");
+        throw new Error("Failed to upload file");
       }
 
       const result = (await response.json()) as ApiResponse<string>;
       if (result.code !== 200 || !result.data) {
-        throw new Error(result.msg || "Failed to upload image");
+        throw new Error(result.msg || "Failed to upload file");
       }
 
       return result.data;

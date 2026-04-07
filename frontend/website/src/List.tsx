@@ -4,7 +4,10 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import CloseIcon from '@mui/icons-material/Close';
-import AddPhotoAlternateIcon from '@mui/icons-material/AddPhotoAlternate';
+import AttachFileIcon from '@mui/icons-material/AttachFile';
+import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
+import OpenInNewIcon from '@mui/icons-material/OpenInNew';
+import { getAttachmentName, isImageAttachment, isImageFile } from './attachments';
 import { getMockCurrentUser, getMockIssues, saveMockIssues, shouldUseMock } from './mock';
 import { uploadIssueImages } from './issueImages';
 
@@ -13,7 +16,7 @@ const ISSUE_TYPES = ['Safety Hazard', 'Security Concern', 'Health Issue', 'Equip
 
 interface IssueVo { id: number; userId: number; title: string; brief: string; description: string; location: string; status: string; witnessInfo: string; happenTime: string; urls: string[]; }
 interface EditForm { issueType: string; brief: string; location: string; dateTime: string; description: string; witnessInfo: string; }
-interface PendingImage { file: File; preview: string; }
+interface PendingAttachment { file: File; preview: string; }
 
 const statusLabel: Record<string, string> = { pending: 'Pending', processing: 'In Progress', completed: 'Completed' };
 const statusColor = (status: string): 'warning' | 'info' | 'success' | 'default' => status === 'pending' ? 'warning' : status === 'processing' ? 'info' : status === 'completed' ? 'success' : 'default';
@@ -36,11 +39,11 @@ const ViewIssues: React.FC = () => {
   const [deleteSubmitting, setDeleteSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [previewImage, setPreviewImage] = useState<string | null>(null);
-  const [editImageUrls, setEditImageUrls] = useState<string[]>([]);
-  const [pendingImages, setPendingImages] = useState<PendingImage[]>([]);
+  const [editAttachmentUrls, setEditAttachmentUrls] = useState<string[]>([]);
+  const [pendingAttachments, setPendingAttachments] = useState<PendingAttachment[]>([]);
 
   const getToken = () => localStorage.getItem('token') || '';
-  const clearPendingImages = () => { pendingImages.forEach((image) => URL.revokeObjectURL(image.preview)); setPendingImages([]); };
+  const clearPendingAttachments = () => { pendingAttachments.forEach((attachment) => URL.revokeObjectURL(attachment.preview)); setPendingAttachments([]); };
 
   const fetchIssues = async () => {
     setLoading(true);
@@ -73,25 +76,25 @@ const ViewIssues: React.FC = () => {
 
   const handleView = (issue: IssueVo) => { setSelectedIssue(issue); setViewDialogOpen(true); };
   const handleEditOpen = (issue: IssueVo) => {
-    clearPendingImages();
+    clearPendingAttachments();
     const typeMatch = issue.title.match(/^\[(.+?)\] /);
     setEditForm({ issueType: typeMatch ? typeMatch[1] : '', brief: issue.brief || '', location: issue.location || '', dateTime: issue.happenTime ? issue.happenTime.slice(0, 16) : '', description: issue.description || '', witnessInfo: issue.witnessInfo || '' });
-    setEditImageUrls(issue.urls || []);
+    setEditAttachmentUrls(issue.urls || []);
     setSelectedIssue(issue);
     setEditDialogOpen(true);
   };
-  const handleEditClose = () => { clearPendingImages(); setEditImageUrls([]); setEditDialogOpen(false); };
-  const handleEditImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleEditClose = () => { clearPendingAttachments(); setEditAttachmentUrls([]); setEditDialogOpen(false); };
+  const handleEditAttachmentSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
-    setPendingImages((prev) => [...prev, ...files.map((file) => ({ file, preview: URL.createObjectURL(file) }))]);
+    setPendingAttachments((prev) => [...prev, ...files.map((file) => ({ file, preview: URL.createObjectURL(file) }))]);
     e.target.value = '';
   };
-  const handleRemoveExistingImage = (url: string) => setEditImageUrls((prev) => prev.filter((item) => item !== url));
-  const handleRemovePendingImage = (index: number) => {
-    setPendingImages((prev) => {
-      const image = prev[index];
-      if (image) URL.revokeObjectURL(image.preview);
+  const handleRemoveExistingAttachment = (url: string) => setEditAttachmentUrls((prev) => prev.filter((item) => item !== url));
+  const handleRemovePendingAttachment = (index: number) => {
+    setPendingAttachments((prev) => {
+      const attachment = prev[index];
+      if (attachment) URL.revokeObjectURL(attachment.preview);
       return prev.filter((_, idx) => idx !== index);
     });
   };
@@ -102,7 +105,7 @@ const ViewIssues: React.FC = () => {
     try {
       const title = editForm.issueType ? `[${editForm.issueType}] ${editForm.brief}` : editForm.brief;
       if (shouldUseMock()) {
-        const finalUrls = [...editImageUrls, ...pendingImages.map((image) => image.preview)];
+        const finalUrls = [...editAttachmentUrls, ...pendingAttachments.map((attachment) => attachment.preview)];
         saveMockIssues(getMockIssues().map((issue) => issue.id === selectedIssue.id ? { ...issue, title, brief: editForm.brief, description: editForm.description, location: editForm.location, witnessInfo: editForm.witnessInfo, happenTime: editForm.dateTime ? new Date(editForm.dateTime).toISOString().slice(0, 19) : issue.happenTime, urls: finalUrls } : issue));
         handleEditClose();
         setSuccessMessage('Mock report updated successfully!');
@@ -110,8 +113,8 @@ const ViewIssues: React.FC = () => {
         fetchIssues();
         return;
       }
-      const uploadedUrls = await uploadIssueImages(pendingImages.map((image) => image.file), getToken());
-      const body = { id: selectedIssue.id, title, brief: editForm.brief, description: editForm.description, location: editForm.location, witnessInfo: editForm.witnessInfo || null, happenTime: editForm.dateTime ? new Date(editForm.dateTime).toISOString().slice(0, 19) : null, urls: [...editImageUrls, ...uploadedUrls] };
+      const uploadedUrls = await uploadIssueImages(pendingAttachments.map((attachment) => attachment.file), getToken());
+      const body = { id: selectedIssue.id, title, brief: editForm.brief, description: editForm.description, location: editForm.location, witnessInfo: editForm.witnessInfo || null, happenTime: editForm.dateTime ? new Date(editForm.dateTime).toISOString().slice(0, 19) : null, urls: [...editAttachmentUrls, ...uploadedUrls] };
       const res = await fetch(`${API_BASE}/api/issue/upsert`, { method: 'POST', headers: { token: getToken(), 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
       const result = await res.json();
       if (result.code === 200) {
@@ -160,8 +163,8 @@ const ViewIssues: React.FC = () => {
   return (
     <Box sx={{ width: '100%' }}>
       <Box sx={{ mb: 3 }}>
-        <Typography variant="h4" sx={{ fontWeight: 700, color: '#fff', mb: 1, fontSize: { xs: '2.2rem', md: '3rem' } }}>My Reports</Typography>
-        <Typography variant="body1" sx={{ color: 'rgba(255,255,255,0.78)', maxWidth: 520, fontSize: { xs: '1rem', md: '1.05rem' } }}>View and manage your submitted safety reports</Typography>
+        <Typography variant="h4" sx={{ fontWeight: 700, color: '#fff', mb: 1, fontSize: { xs: '2.45rem', md: '3rem' } }}>My Reports</Typography>
+        <Typography variant="body1" sx={{ color: 'rgba(255,255,255,0.78)', maxWidth: 520, fontSize: { xs: '1.1rem', md: '1.05rem' } }}>View and manage your submitted safety reports</Typography>
       </Box>
       {error && <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError('')}>{error}</Alert>}
       {successMessage && <Alert severity="success" sx={{ mb: 2 }} onClose={() => setSuccessMessage('')}>{successMessage}</Alert>}
@@ -175,39 +178,39 @@ const ViewIssues: React.FC = () => {
           <Stack spacing={2}>
             {issues.map((issue) => (
               <Card key={issue.id} elevation={4} sx={{ borderRadius: 3, overflow: 'hidden' }}>
-                <CardContent sx={{ p: 2.25 }}>
+                <CardContent sx={{ p: 2.5 }}>
                   <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={1.5}>
                     <Box sx={{ minWidth: 0 }}>
-                      <Typography variant="overline" sx={{ color: 'text.secondary', letterSpacing: 0.8 }}>Report #{issue.id}</Typography>
-                      <Typography variant="h6" sx={{ fontWeight: 700, lineHeight: 1.25 }}>{issue.title}</Typography>
+                      <Typography variant="overline" sx={{ color: 'text.secondary', letterSpacing: 0.8, fontSize: '0.95rem' }}>Report #{issue.id}</Typography>
+                      <Typography variant="h6" sx={{ fontWeight: 700, lineHeight: 1.25, fontSize: '1.55rem' }}>{issue.title}</Typography>
                     </Box>
                     <Chip label={statusLabel[issue.status] ?? issue.status} color={statusColor(issue.status)} size="small" />
                   </Stack>
 
                   <Grid container spacing={1.5} sx={{ mt: 0.5 }}>
                     <Grid item xs={12}>
-                      <Typography variant="caption" color="text.secondary">Location</Typography>
-                      <Typography variant="body2" sx={{ fontWeight: 500 }}>{issue.location || 'N/A'}</Typography>
+                      <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.92rem' }}>Location</Typography>
+                      <Typography variant="body2" sx={{ fontWeight: 500, fontSize: '1.05rem' }}>{issue.location || 'N/A'}</Typography>
                     </Grid>
                     <Grid item xs={12}>
-                      <Typography variant="caption" color="text.secondary">Date & Time</Typography>
-                      <Typography variant="body2">{formatDateTime(issue.happenTime)}</Typography>
+                      <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.92rem' }}>Date & Time</Typography>
+                      <Typography variant="body2" sx={{ fontSize: '1.05rem' }}>{formatDateTime(issue.happenTime)}</Typography>
                     </Grid>
                     <Grid item xs={12}>
-                      <Typography variant="caption" color="text.secondary">Brief</Typography>
-                      <Typography variant="body2">{issue.brief || 'N/A'}</Typography>
+                      <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.92rem' }}>Brief</Typography>
+                      <Typography variant="body2" sx={{ fontSize: '1.05rem' }}>{issue.brief || 'N/A'}</Typography>
                     </Grid>
                   </Grid>
 
                   <Box sx={{ mt: 2, px: 1.5, py: 1.25, borderRadius: 2, bgcolor: 'rgba(25, 118, 210, 0.08)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1.5 }}>
-                    <Typography variant="body2" sx={{ fontWeight: 600 }}>{(issue.urls || []).length} photo{(issue.urls || []).length !== 1 ? 's' : ''}</Typography>
-                    <Chip label={(issue.urls || []).length > 0 ? 'Images attached' : 'No images'} size="small" color={(issue.urls || []).length > 0 ? 'primary' : 'default'} variant="outlined" />
+                    <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '1.05rem' }}>{(issue.urls || []).length} attachment{(issue.urls || []).length !== 1 ? 's' : ''}</Typography>
+                    <Chip label={(issue.urls || []).length > 0 ? 'Files attached' : 'No files'} size="small" color={(issue.urls || []).length > 0 ? 'primary' : 'default'} variant="outlined" />
                   </Box>
 
                   <Stack direction="row" spacing={1} sx={{ mt: 2 }}>
-                    <Button variant="outlined" color="primary" startIcon={<VisibilityIcon />} onClick={() => handleView(issue)} fullWidth>View</Button>
-                    <Button variant="outlined" color="info" startIcon={<EditIcon />} onClick={() => handleEditOpen(issue)} disabled={issue.status !== 'pending'} fullWidth>Edit</Button>
-                    <Button variant="outlined" color="error" startIcon={<DeleteIcon />} onClick={() => handleDeleteOpen(issue)} disabled={issue.status !== 'pending'} fullWidth>Delete</Button>
+                    <Button variant="outlined" color="primary" startIcon={<VisibilityIcon />} onClick={() => handleView(issue)} fullWidth sx={{ fontSize: '1rem', py: 1.1 }}>View</Button>
+                    <Button variant="outlined" color="info" startIcon={<EditIcon />} onClick={() => handleEditOpen(issue)} disabled={issue.status !== 'pending'} fullWidth sx={{ fontSize: '1rem', py: 1.1 }}>Edit</Button>
+                    <Button variant="outlined" color="error" startIcon={<DeleteIcon />} onClick={() => handleDeleteOpen(issue)} disabled={issue.status !== 'pending'} fullWidth sx={{ fontSize: '1rem', py: 1.1 }}>Delete</Button>
                   </Stack>
                 </CardContent>
               </Card>
@@ -224,7 +227,7 @@ const ViewIssues: React.FC = () => {
                 <TableCell sx={{ fontWeight: 600 }}>Location</TableCell>
                 <TableCell sx={{ fontWeight: 600 }}>Status</TableCell>
                 <TableCell sx={{ fontWeight: 600 }}>Date & Time</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>Images</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>Attachments</TableCell>
                 <TableCell sx={{ fontWeight: 600 }} align="center">Actions</TableCell>
               </TableRow>
             </TableHead>
@@ -243,7 +246,7 @@ const ViewIssues: React.FC = () => {
                     <TableCell sx={{ maxWidth: 160 }}><Typography variant="body2" noWrap>{issue.location}</Typography></TableCell>
                     <TableCell><Chip label={statusLabel[issue.status] ?? issue.status} color={statusColor(issue.status)} size="small" /></TableCell>
                     <TableCell><Typography variant="body2">{formatDateTime(issue.happenTime)}</Typography></TableCell>
-                    <TableCell><Chip label={`${(issue.urls || []).length} photo${(issue.urls || []).length !== 1 ? 's' : ''}`} size="small" color={(issue.urls || []).length > 0 ? 'primary' : 'default'} variant="outlined" /></TableCell>
+                    <TableCell><Chip label={`${(issue.urls || []).length} attachment${(issue.urls || []).length !== 1 ? 's' : ''}`} size="small" color={(issue.urls || []).length > 0 ? 'primary' : 'default'} variant="outlined" /></TableCell>
                     <TableCell align="center">
                       <Tooltip title="View Details"><IconButton size="small" color="primary" onClick={() => handleView(issue)}><VisibilityIcon fontSize="small" /></IconButton></Tooltip>
                       <Tooltip title={issue.status !== 'pending' ? 'Only pending reports can be edited' : 'Edit Report'}><span><IconButton size="small" color="info" onClick={() => handleEditOpen(issue)} disabled={issue.status !== 'pending'}><EditIcon fontSize="small" /></IconButton></span></Tooltip>
@@ -301,11 +304,21 @@ const ViewIssues: React.FC = () => {
               )}
               {(selectedIssue.urls || []).length > 0 && (
                 <Grid item xs={12}>
-                  <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>Attached Images ({selectedIssue.urls.length})</Typography>
+                  <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>Attachments ({selectedIssue.urls.length})</Typography>
                   <ImageList cols={isMobile ? 2 : 3} gap={8}>
                     {selectedIssue.urls.map((url, idx) => (
-                      <ImageListItem key={idx} sx={{ cursor: 'pointer', '&:hover': { opacity: 0.8 } }} onClick={() => setPreviewImage(url)}>
-                        <img src={url} alt={`Image ${idx + 1}`} loading="lazy" style={{ height: 150, objectFit: 'cover' }} />
+                      <ImageListItem key={idx} sx={{ overflow: 'hidden', borderRadius: 2 }}>
+                        {isImageAttachment(url) ? (
+                          <Box sx={{ cursor: 'pointer', '&:hover': { opacity: 0.8 } }} onClick={() => setPreviewImage(url)}>
+                            <img src={url} alt={`Attachment ${idx + 1}`} loading="lazy" style={{ height: 150, width: '100%', objectFit: 'cover' }} />
+                          </Box>
+                        ) : (
+                          <Box sx={{ height: 150, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: 1, px: 2, textAlign: 'center', bgcolor: '#f8fafc', border: '1px solid #e5e7eb' }}>
+                            <InsertDriveFileIcon sx={{ fontSize: 36, color: '#475569' }} />
+                            <Typography variant="body2" sx={{ fontWeight: 600, wordBreak: 'break-word' }}>{getAttachmentName(url)}</Typography>
+                            <Button component="a" href={url} target="_blank" rel="noreferrer" size="small" endIcon={<OpenInNewIcon fontSize="small" />}>Open</Button>
+                          </Box>
+                        )}
                       </ImageListItem>
                     ))}
                   </ImageList>
@@ -348,20 +361,27 @@ const ViewIssues: React.FC = () => {
             </Grid>
             <Grid item xs={12}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
-                <Button component="label" variant="outlined" startIcon={<AddPhotoAlternateIcon />}>Add Images
-                  <input hidden type="file" accept="image/*" multiple onChange={handleEditImageSelect} />
+                <Button component="label" variant="outlined" startIcon={<AttachFileIcon />}>Add Files
+                  <input hidden type="file" multiple onChange={handleEditAttachmentSelect} />
                 </Button>
-                <Typography variant="body2" color="text.secondary">Existing images will be kept unless you remove them below.</Typography>
+                <Typography variant="body2" color="text.secondary">Existing attachments will be kept unless you remove them below.</Typography>
               </Box>
             </Grid>
-            {editImageUrls.length > 0 && (
+            {editAttachmentUrls.length > 0 && (
               <Grid item xs={12}>
-                <Typography variant="subtitle2" sx={{ mb: 1 }}>Current Images ({editImageUrls.length})</Typography>
+                <Typography variant="subtitle2" sx={{ mb: 1 }}>Current Attachments ({editAttachmentUrls.length})</Typography>
                 <ImageList cols={isMobile ? 2 : 3} gap={8}>
-                  {editImageUrls.map((url) => (
+                  {editAttachmentUrls.map((url) => (
                     <ImageListItem key={url} sx={{ position: 'relative', overflow: 'hidden', borderRadius: 2 }}>
-                      <img src={url} alt="Current issue" loading="lazy" style={{ height: 140, objectFit: 'cover' }} />
-                      <IconButton size="small" onClick={() => handleRemoveExistingImage(url)} sx={{ position: 'absolute', top: 8, right: 8, bgcolor: 'rgba(0,0,0,0.6)', color: '#fff', '&:hover': { bgcolor: 'rgba(0,0,0,0.8)' } }}>
+                      {isImageAttachment(url) ? (
+                        <img src={url} alt="Current attachment" loading="lazy" style={{ height: 140, width: '100%', objectFit: 'cover' }} />
+                      ) : (
+                        <Box sx={{ height: 140, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: 1, px: 2, textAlign: 'center', bgcolor: '#f8fafc', border: '1px solid #e5e7eb' }}>
+                          <InsertDriveFileIcon sx={{ fontSize: 34, color: '#475569' }} />
+                          <Typography variant="body2" sx={{ fontWeight: 600, wordBreak: 'break-word' }}>{getAttachmentName(url)}</Typography>
+                        </Box>
+                      )}
+                      <IconButton size="small" onClick={() => handleRemoveExistingAttachment(url)} sx={{ position: 'absolute', top: 8, right: 8, bgcolor: 'rgba(0,0,0,0.6)', color: '#fff', '&:hover': { bgcolor: 'rgba(0,0,0,0.8)' } }}>
                         <DeleteIcon fontSize="small" />
                       </IconButton>
                     </ImageListItem>
@@ -369,14 +389,22 @@ const ViewIssues: React.FC = () => {
                 </ImageList>
               </Grid>
             )}
-            {pendingImages.length > 0 && (
+            {pendingAttachments.length > 0 && (
               <Grid item xs={12}>
-                <Typography variant="subtitle2" sx={{ mb: 1 }}>New Images To Upload ({pendingImages.length})</Typography>
+                <Typography variant="subtitle2" sx={{ mb: 1 }}>New Attachments To Upload ({pendingAttachments.length})</Typography>
                 <ImageList cols={isMobile ? 2 : 3} gap={8}>
-                  {pendingImages.map((image, index) => (
-                    <ImageListItem key={`${image.file.name}-${index}`} sx={{ position: 'relative', overflow: 'hidden', borderRadius: 2 }}>
-                      <img src={image.preview} alt={image.file.name} loading="lazy" style={{ height: 140, objectFit: 'cover' }} />
-                      <IconButton size="small" onClick={() => handleRemovePendingImage(index)} sx={{ position: 'absolute', top: 8, right: 8, bgcolor: 'rgba(0,0,0,0.6)', color: '#fff', '&:hover': { bgcolor: 'rgba(0,0,0,0.8)' } }}>
+                  {pendingAttachments.map((attachment, index) => (
+                    <ImageListItem key={`${attachment.file.name}-${index}`} sx={{ position: 'relative', overflow: 'hidden', borderRadius: 2 }}>
+                      {isImageFile(attachment.file) ? (
+                        <img src={attachment.preview} alt={attachment.file.name} loading="lazy" style={{ height: 140, width: '100%', objectFit: 'cover' }} />
+                      ) : (
+                        <Box sx={{ height: 140, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: 1, px: 2, textAlign: 'center', bgcolor: '#f8fafc', border: '1px solid #e5e7eb' }}>
+                          <InsertDriveFileIcon sx={{ fontSize: 34, color: '#475569' }} />
+                          <Typography variant="body2" sx={{ fontWeight: 600, wordBreak: 'break-word' }}>{attachment.file.name}</Typography>
+                          <Typography variant="caption" color="text.secondary">{attachment.file.type || 'Unknown file type'}</Typography>
+                        </Box>
+                      )}
+                      <IconButton size="small" onClick={() => handleRemovePendingAttachment(index)} sx={{ position: 'absolute', top: 8, right: 8, bgcolor: 'rgba(0,0,0,0.6)', color: '#fff', '&:hover': { bgcolor: 'rgba(0,0,0,0.8)' } }}>
                         <DeleteIcon fontSize="small" />
                       </IconButton>
                     </ImageListItem>
@@ -411,7 +439,7 @@ const ViewIssues: React.FC = () => {
 
       <Dialog open={!!previewImage} onClose={() => setPreviewImage(null)} maxWidth="md" fullWidth fullScreen={isMobile}>
         <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Typography variant="h6">Image Preview</Typography>
+          <Typography variant="h6">Attachment Preview</Typography>
           <IconButton onClick={() => setPreviewImage(null)} size="small"><CloseIcon /></IconButton>
         </DialogTitle>
         <DialogContent>
